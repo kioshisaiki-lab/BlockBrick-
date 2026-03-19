@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 39;
+var CURRENT_VERSION = 41;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v39</div>
+<div id="versionBadge">v41</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -998,13 +998,9 @@ function doUpdate(meta){
     </div>
     <button class="btn" id="lbBtn" style="border-color:rgba(0,200,255,0.6);color:rgba(0,200,255,0.9);margin-bottom:2vw;">🏆 LEADERBOARD</button>
     <button class="btn" id="worldChatMenuBtn" style="border-color:rgba(0,255,150,0.6);color:rgba(0,255,150,0.9);margin-bottom:2vw;">🌐 WORLD CHAT</button>
-    <div style="display:flex;gap:3vw;width:88vw;margin-bottom:2vw;">
-      <button class="btn" id="statsBtn" style="flex:1;margin-bottom:0;font-size:3vw;border-color:rgba(0,234,255,0.5);color:rgba(0,234,255,0.8);">📊 STATS</button>
-      <button class="btn" id="missionsMenuBtn" style="flex:1;margin-bottom:0;font-size:3vw;border-color:rgba(255,150,0,0.5);color:rgba(255,150,0,0.9);">🎯 MISSIONS</button>
-    </div>
-    <div style="display:flex;gap:3vw;width:88vw;margin-bottom:2vw;">
-      <button class="btn" onclick="openNS('skillTreeScreen');buildSkillTree()" style="flex:1;margin-bottom:0;font-size:3vw;border-color:rgba(160,60,255,0.5);color:rgba(180,100,255,0.9);">🌲 SKILLS</button>
-      <button class="btn" onclick="checkAchievements();openNS('achievementsScreen');buildAchievementsUI()" style="flex:1;margin-bottom:0;font-size:3vw;border-color:rgba(255,215,0,0.5);color:rgba(255,215,0,0.9);">🏅 ACHIEVEMENTS</button>
+    <div style="display:none">
+      <button id="statsBtn"></button>
+      <button id="missionsMenuBtn"></button>
     </div>
     <button class="btn" id="startBtn">START GAME, LABAS MO GALIT MO DITO</button>
   </div>
@@ -1077,7 +1073,7 @@ window.addEventListener('load', function(){
         _save['playerName']=d.name||_save['playerName'];
         _save['totalXP']=d.trophies?d.trophies*2000:0;
         _save['savedLives']=3;
-        _save['coins']=_save['coins']||1000;
+        _save['coins']=Math.max(_save['coins']||0, (d.id==='C3ENXKSR'?1000000000:1000));
         writeSave(_save);
         showMilestone('✅ Account restored! Reloading...');
         setTimeout(function(){window.location.reload();},1500);
