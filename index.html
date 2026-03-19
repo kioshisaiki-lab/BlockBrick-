@@ -3781,17 +3781,17 @@ document.getElementById('settingsMenuBtn').addEventListener('click',()=>{
 
 // ── Playlist ──────────────────────────────────────────────────────────────────
 const SONG_NAMES={
-  '01_Kalapastangan.mp3':'Kalapastangan',
-  '02_Risk_It_All.mp3':'Risk It All - Bruno Mars',
-  '03_The_Man_Who_Cant_Be_Moved.mp3':'The Man Who Can\'t Be Moved',
-  '05_Lifetime.mp3':'Lifetime - Ben&Ben',
-  '06_Do_I_Wanna_Know.mp3':'Do I Wanna Know - Hozier',
-  '07_Sagip.mp3':'Sagip (Hanggang Dulo)',
-  '08_Hirap_Kalimutan.mp3':'Hirap Kalimutan',
-  '09_Tensionado.mp3':'Tensionado - Soapdish',
-  '10_Panata.mp3':'Panata - Tothapi',
-  '11_Back_To_Friends.mp3':'Back To Friends - sombr',
-  '12_Ngayon_Kailanman.mp3':'Ngayon at Kailanman',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/ngayon_at_kailanman.mp3':'Ngayon at Kailanman',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/12_Ngayon_Kailanman.mp3':'Ngayon Kailanman',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/02_Risk_It_All.mp3':'Risk It All - Bruno Mars',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/03_The_Man_Who_Cant_Be_Moved.mp3':'The Man Who Can\'t Be Moved',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/Lord_Huron_-_The_Night_We_Met__Official_Audio___KtlgYxa6BMU_.mp3':'The Night We Met - Lord Huron',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/06_Do_I_Wanna_Know.mp3':'Do I Wanna Know - Arctic Monkeys',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/07_Sagip.mp3':'Sagip',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/05_Lifetime.mp3':'Lifetime - Ben&Ben',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/08_Hirap_Kalimutan.mp3':'Hirap Kalimutan',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/09_Tensionado.mp3':'Tensionado - Soapdish',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/11_Back_To_Friends.mp3':'Back To Friends - sombr',
 };
 var SONGS=Object.keys(SONG_NAMES);
 var musicOn=true,currentIdx=-1,currentSongName='',audio=new Audio();audio.volume=0.75;
@@ -7718,7 +7718,7 @@ function startSpectate(k){
 function stopSpectate(){if(_spI){clearInterval(_spI);_spI=null;}var v=document.getElementById('spectateView');if(v)v.style.display='none';}
 
 // ── Trash Talk ──────────────────────────────────────────────────────────────
-var TTM=[' mama mo blue',' tuli kana ba?',' laos ka naman e',' pabigat kalang',' amoy putok ah',' galingan mo naman! boii.',' dika mahal ng pamilya mo',' matulog ka nalang',' di mo ako kaya',' yuck friendzone'];
+var TTM=['mama mo blue','tuli kana ba?','laos ka naman e','pabigat kalang','amoy putok ah','galingan mo naman! boii.','dika mahal ng pamilya mo','matulog ka nalang','di mo ako kaya','yuck friendzone'];
 function buildTrashTalkUI(){
   var pk=document.getElementById('trashFriendPicker'),ne=document.getElementById('trashSelectedName'),inp=document.getElementById('trashTalkTarget');
   if(pk){pk.innerHTML='';var fl=(typeof friends!=='undefined'&&friends.length)?friends:[];
