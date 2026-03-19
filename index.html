@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 49;
+var CURRENT_VERSION = 50;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v49</div>
+<div id="versionBadge">v50</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -3791,6 +3791,9 @@ const SONG_NAMES={
   'https://kioshisaiki-lab.github.io/BlockBrick-/09_Tensionado.mp3':'Tensionado - Soapdish',
   'https://kioshisaiki-lab.github.io/BlockBrick-/10_Panata.mp3':'Panata - Tothapi',
   'https://kioshisaiki-lab.github.io/BlockBrick-/11_Back_To_Friends.mp3':'Back To Friends - sombr',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/12_Ngayon_Kailanman.mp3':'Ngayon Kailanman',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/Lord_Huron_-_The_Night_We_Met__Official_Audio___KtlgYxa6BMU_.mp3':'The Night We Met - Lord Huron',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/ngayon_at_kailanman.mp3':'Ngayon at Kailanman',
 };
 var SONGS=Object.keys(SONG_NAMES);
 var musicOn=true,currentIdx=-1,currentSongName='',audio=new Audio();audio.volume=0.75;
