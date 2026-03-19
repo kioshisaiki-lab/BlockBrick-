@@ -4674,6 +4674,15 @@ function handleBack(){
     history.pushState({bb:true},'');
   } else if(top==='friendprofile'){
     document.getElementById('friendProfileScreen').classList.remove('show');
+    // If world chat / global chat is still open behind, restore gc-open
+    var gcLobby=document.getElementById('globalChatLobby');
+    var gcRoom=document.getElementById('globalChatRoom');
+    var chatScreen=document.getElementById('chatScreen');
+    if((gcLobby&&gcLobby.classList.contains('show'))||
+       (gcRoom&&gcRoom.classList.contains('show'))||
+       (chatScreen&&chatScreen.classList.contains('show'))){
+      document.body.classList.add('gc-open');
+    }
     history.pushState({bb:true},'');
   } else if(top==='spin'){
     document.getElementById('spinScreen').classList.remove('show');
