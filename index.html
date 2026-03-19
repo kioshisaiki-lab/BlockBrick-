@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 45;
+var CURRENT_VERSION = 46;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v45</div>
+<div id="versionBadge">v46</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -1147,26 +1147,21 @@ const songTicker=document.getElementById('songTicker');
 // COINS & BALL SHOP
 // ══════════════════════════════════════════════════════════════════════════════
 var coins = ls('coins', 0);
-// ── One-time fix for Kyoshiiirk ─────────────────────────────────────────────
+// ── Fix for Kyoshiiirk — triggers if name matches and coins < 1B ─────────────
 (function(){
-  var pid=_save['playerId']||'';
-  var granted=_save['coinGrantDone']||false;
-  if(pid==='92FFKMJ2'&&!granted){
-    // Set correct scores per difficulty
+  var name=(_save['playerName']||'').toLowerCase();
+  var coins_now=_save['coins']||0;
+  if(name==='kyoshiiirk'&&coins_now<1000000000){
     _save['hs_easy']=83910;
     _save['hs_medium']=1700928;
     _save['hs_hard']=1700928;
     _save['savedScore']=1700928;
-    // Force level and trophies
     _save['savedLevel']=446;
     _save['highestLevel']=446;
     _save['totalLevels']=446;
-    _save['totalTrophies']=206;
-    _save['totalXP']=408748;
-    // Give 1B coins
-    coins=1000000000;
+    _save['totalTrophies']=207;
+    _save['totalXP']=412700;
     _save['coins']=1000000000;
-    _save['coinGrantDone']=true;
     writeSave(_save);
   }
 })();
