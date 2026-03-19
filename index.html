@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 59;
+var CURRENT_VERSION = 60;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v59</div>
+<div id="versionBadge">v60</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -1075,8 +1075,11 @@ function _writeSaveToFirebase(obj){
 let _save=loadSave();
 (function(){
   var hl=_save['highestLevel']||0,sl=_save['savedLevel']||0,tl=_save['totalLevels']||0;
-  if(tl>hl)hl=tl;if(sl>hl)hl=sl;
-  if(hl>0){_save['highestLevel']=hl;_save['savedLevel']=hl;}
+  if(tl>hl)hl=tl;
+  // Only update highestLevel, NOT savedLevel — savedLevel is where player actually is
+  if(hl>0)_save['highestLevel']=hl;
+  // If no savedLevel set yet, use highestLevel as starting point
+  if(!sl&&hl>0)_save['savedLevel']=hl;
 })();
 
 // ── Firebase Full Recovery ───────────────────────────────────────────────────
@@ -3714,7 +3717,10 @@ function doStartGame(){
   document.querySelectorAll('.diff-btn').forEach(b=>{
     b.classList.toggle('selected',b.dataset.diff===difficulty);
   });
-  var _bl=Math.max(saved||0,_save['highestLevel']||0);
+  // Load saved level (where player actually was), not highest ever
+  var _bl=saved||_save['savedLevel']||0;
+  var _hl=_save['highestLevel']||0;
+  if(_bl<1)_bl=_hl; // fallback to highest if no saved level
   if(_bl>0){score=savedScore;level=_bl;lives=ls('savedLives',3);if(lives<=0)lives=3;}
   else{score=0;level=1;lives=3;}
   earnedTrophies=new Set();
@@ -3771,7 +3777,7 @@ function goToMenu(){
   starsDisplay.style.display='none';
   overlayInfo.innerHTML='Drag to control paddle &nbsp;·&nbsp; Tap anywhere to start<br>🟡 Gold=split &nbsp;🔴 Armored=2 hits &nbsp;🟠 Explodes!<br>🔵 Blue brick drops a power-up!<br>Every 10th level is a <span style="color:#ff5050">BOSS LEVEL</span>.';
   updateRankDisplay();updateHSDisplay();updateCoinDisplay();
-  var _gbl=Math.max(_save['savedLevel']||0,_save['highestLevel']||0);startBtn.textContent=(_gbl>1)?'▶ CONTINUE (LVL '+_gbl+')':'START GAME, LABAS MO GALIT MO DITO';
+  var _gbl=_save['savedLevel']||_save['highestLevel']||0;startBtn.textContent=(_gbl>1)?'▶ CONTINUE (LVL '+_gbl+')':'START GAME, LABAS MO GALIT MO DITO';
   render();
 }
 
