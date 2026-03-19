@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 68;
+var CURRENT_VERSION = 69;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 var FB = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app'; // declared early for save system
 
@@ -692,7 +692,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v68</div>
+<div id="versionBadge">v69</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -5023,6 +5023,23 @@ function genPlayerId(){
 }
 var playerId=ls('playerId',null);
 if(!playerId){playerId=genPlayerId();lsSet('playerId',playerId);}
+
+// ── Auto-restore from Firebase on fresh install ──────────────────────────────
+(function(){
+  if(ls('playerName',null))return; // already have local data
+  var pid=ls('playerId',null);
+  if(!pid)return;
+  var _fbUrl='https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
+  fetch(_fbUrl+'/bb/saves/'+pid+'.json',{cache:'no-store'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d&&d.playerName){
+        Object.keys(d).forEach(function(k){_save[k]=d[k];});
+        writeSave(_save);
+        setTimeout(function(){window.location.reload();},300);
+      }
+    }).catch(function(){});
+})();
 
 var friends=ls('friends',[]); // [{id,name,score,diff}]
 
