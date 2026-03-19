@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 65;
+var CURRENT_VERSION = 66;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v65</div>
+<div id="versionBadge">v66</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -7755,15 +7755,19 @@ function closeNS(id){var el=document.getElementById(id);if(el)el.style.display='
   var SCREENS=['skillTreeScreen','achievementsScreen','seasonPassScreen','clanScreen',
     'tournamentScreen','spectateScreen','trashTalkScreen','shopScreen','spinScreen',
     'lbScreen','profileScreen','missionsScreen','statsScreen','bgScreen','chatScreen',
-    'friendProfileScreen','avatarPickerScreen','globalChatLobby','globalChatScreen',
-    'clanWarsModal','miniGameModal'];
-  function isModalOpen(id){var el=document.getElementById(id);return el&&el.style.display!=='none'&&el.style.display!=='';}
+    'friendProfileScreen','avatarPickerScreen','globalChatLobby','globalChatScreen'];
   function isOpen(id){var el=document.getElementById(id);if(!el)return false;
     return el.classList.contains('show')||el.style.display==='flex'||el.style.display==='block';}
+  function isDynamicModalOpen(){
+    // Check dynamically created modals
+    var ids=['clanWarsModal','miniGameModal'];
+    return ids.some(function(id){var el=document.getElementById(id);return el&&el.parentNode;});
+  }
   function sync(){
     var ov=document.getElementById('overlay');
     var menuOn=ov&&!ov.classList.contains('hidden');
-    nav.style.display=(menuOn&&!SCREENS.some(isOpen))?'flex':'none';
+    var anyOpen=SCREENS.some(isOpen)||isDynamicModalOpen();
+    nav.style.display=(menuOn&&!anyOpen)?'flex':'none';
   }
   var ov=document.getElementById('overlay');
   if(ov)new MutationObserver(sync).observe(ov,{attributes:true,attributeFilter:['class']});
