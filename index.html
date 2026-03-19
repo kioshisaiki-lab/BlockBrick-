@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 52;
+var CURRENT_VERSION = 55;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v52</div>
+<div id="versionBadge">v55</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -3698,7 +3698,13 @@ musicToggle.addEventListener('change',()=>{musicOn=musicToggle.checked;if(musicO
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 function doStartGame(){
-  playMusic();
+  // Guarantee music starts
+  _musicStarted=true;
+  _musicPending=false;
+  _musicRetries=0;
+  if(musicOn){
+    playMusic();
+  }
   // ALWAYS resume saved progress — coins/XP/rank/level are never wiped
   const saved=ls('savedLevel',null);
   const savedScore=ls('savedScore',0);
@@ -3802,41 +3808,80 @@ function pickNext(){
   var n;do{n=Math.floor(Math.random()*SONGS.length);}while(n===currentIdx&&SONGS.length>1);
   currentIdx=n;return SONGS[currentIdx];
 }
-function playMusic(){
-  if(!musicOn)return;
-  const s=pickNext();
-  audio.src=s;
-  currentSongName=SONG_NAMES[s]||s;
-  songTicker.textContent='♪ '+currentSongName;
-  audio.play().catch(function(){
-    // Autoplay blocked - wait for user touch then retry
-    _musicPending=true;
-  });
-}
 var _musicPending=false;
 var _musicStarted=false;
+var _musicRetries=0;
+var _musicLocked=false; // prevent overlapping play calls
 
-// Start music on first user interaction (fixes autoplay block in WebView)
-function _tryStartMusic(){
-  if(!_musicStarted){
-    _musicStarted=true;
-    if(musicOn&&(audio.paused||_musicPending)){
-      _musicPending=false;
-      if(!audio.src||audio.src===''){
-        playMusic();
-      } else {
-        audio.play().catch(function(){playMusic();});
-      }
-    }
-  }
+function playMusic(){
+  if(!musicOn||_musicLocked)return;
+  _musicRetries=0;
+  _doPlaySong(pickNext());
 }
-document.addEventListener('touchstart',_tryStartMusic,{once:false,passive:true});
-document.addEventListener('click',_tryStartMusic,{once:false,passive:true});
 
-audio.addEventListener('ended',()=>{if(musicOn)playMusic();});
-audio.addEventListener('error',()=>{
-  // Song failed to load (e.g. file not on GitHub yet) - skip to next
-  setTimeout(function(){if(musicOn)playMusic();},1000);
+function _doPlaySong(s){
+  if(!musicOn||_musicLocked)return;
+  _musicLocked=true;
+  audio.src=s;
+  currentSongName=SONG_NAMES[s]||s;
+  if(songTicker)songTicker.textContent='♪ '+currentSongName;
+  audio.load();
+  setTimeout(function(){
+    if(!musicOn){_musicLocked=false;return;}
+    audio.play().then(function(){
+      _musicLocked=false;
+      _musicRetries=0;
+    }).catch(function(){
+      _musicLocked=false;
+      _musicRetries++;
+      if(_musicRetries<5){
+        // silently retry after delay
+        setTimeout(function(){
+          if(musicOn&&typeof running!=='undefined'&&running){
+            audio.play().catch(function(){
+              // skip to next song silently
+              setTimeout(function(){
+                _musicLocked=false;
+                if(musicOn)_doPlaySong(pickNext());
+              },500);
+            });
+          } else {
+            _musicPending=true;
+          }
+        },500);
+      } else {
+        // give up on this song, try next
+        _musicRetries=0;
+        setTimeout(function(){
+          _musicLocked=false;
+          if(musicOn&&typeof running!=='undefined'&&running)_doPlaySong(pickNext());
+        },1000);
+      }
+    });
+  },100);
+}
+
+// Silently handle all audio errors - just skip to next song
+audio.addEventListener('ended',function(){
+  _musicLocked=false;
+  _musicRetries=0;
+  if(musicOn&&typeof running!=='undefined'&&running)_doPlaySong(pickNext());
+});
+audio.addEventListener('error',function(){
+  _musicLocked=false;
+  _musicRetries=0;
+  if(musicOn&&typeof running!=='undefined'&&running){
+    setTimeout(function(){_doPlaySong(pickNext());},1000);
+  }
+});
+audio.addEventListener('stalled',function(){
+  _musicLocked=false;
+  if(musicOn&&typeof running!=='undefined'&&running){
+    setTimeout(function(){_doPlaySong(pickNext());},2000);
+  }
+});
+audio.addEventListener('abort',function(){
+  _musicLocked=false;
 });
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){
