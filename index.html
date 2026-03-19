@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 47;
+var CURRENT_VERSION = 48;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v47</div>
+<div id="versionBadge">v48</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -4735,13 +4735,37 @@ function openProfile(){
   // Copy button
   const copyBtn=document.getElementById('copyIdBtn');
   if(copyBtn){
-    copyBtn.onclick=function(){
-      navigator.clipboard&&navigator.clipboard.writeText(playerId).then(function(){
-        copyBtn.textContent='✅ COPIED!';
-        setTimeout(function(){copyBtn.textContent='📋 TAP TO COPY ID';},2000);
-      }).catch(function(){});
-    };
-    copyBtn.addEventListener('touchend',function(e){e.preventDefault();copyBtn.onclick();});
+    function doCopy(){
+      var id=playerId||'';
+      // Try clipboard API first
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(id).then(function(){
+          copyBtn.textContent='✅ COPIED: '+id;
+          setTimeout(function(){copyBtn.textContent='📋 TAP TO COPY ID';},3000);
+        }).catch(function(){fallbackCopy(id);});
+      } else {
+        fallbackCopy(id);
+      }
+    }
+    function fallbackCopy(id){
+      // Fallback: select a temp input
+      var tmp=document.createElement('input');
+      tmp.value=id;
+      tmp.style.cssText='position:fixed;top:0;left:0;opacity:0;';
+      document.body.appendChild(tmp);
+      tmp.focus();tmp.select();
+      try{
+        document.execCommand('copy');
+        copyBtn.textContent='✅ COPIED: '+id;
+        setTimeout(function(){copyBtn.textContent='📋 TAP TO COPY ID';},3000);
+      }catch(e){
+        // Last resort - show ID in alert
+        copyBtn.textContent='YOUR ID: '+id;
+      }
+      document.body.removeChild(tmp);
+    }
+    copyBtn.onclick=doCopy;
+    copyBtn.addEventListener('touchend',function(e){e.preventDefault();doCopy();});
   }
   document.getElementById('profileIdDisplay').textContent='ID: '+playerId;
   // Change name inside profile
