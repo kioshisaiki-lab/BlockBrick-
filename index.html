@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 61;
+var CURRENT_VERSION = 64;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v61</div>
+<div id="versionBadge">v64</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -865,6 +865,32 @@ function doUpdate(meta){
       <textarea id="bioInput" rows="2" maxlength="80" placeholder="Write something about yourself..."></textarea>
       <button id="bioSaveBtn">💾 SAVE BIO</button>
     </div>
+    <!-- Name Color Customization -->
+    <div style="width:88vw;margin-bottom:4vw;background:rgba(255,255,255,0.03);border:0.4vw solid rgba(160,60,255,0.2);border-radius:2vw;padding:3vw;">
+      <div class="profile-section-title">🎨 NAME COLOR</div>
+      <div style="display:flex;flex-wrap:wrap;gap:2vw;margin-top:2vw;">
+        <button onclick="setNameColor('default')" style="font-family:Orbitron,sans-serif;font-size:2.8vw;padding:2vw 3vw;background:rgba(255,255,255,0.1);color:#fff;border:0.4vw solid rgba(255,255,255,0.4);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">⬜ DEFAULT</button>
+        <button onclick="setNameColor('gold')" style="font-family:Orbitron,sans-serif;font-size:2.8vw;padding:2vw 3vw;background:rgba(255,215,0,0.1);color:#ffd700;border:0.4vw solid rgba(255,215,0,0.5);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">🟡 GOLD</button>
+        <button onclick="setNameColor('cyan')" style="font-family:Orbitron,sans-serif;font-size:2.8vw;padding:2vw 3vw;background:rgba(0,234,255,0.1);color:#00eaff;border:0.4vw solid rgba(0,234,255,0.5);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">🔵 CYAN</button>
+        <button onclick="setNameColor('green')" style="font-family:Orbitron,sans-serif;font-size:2.8vw;padding:2vw 3vw;background:rgba(0,255,150,0.1);color:#00ff96;border:0.4vw solid rgba(0,255,150,0.5);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">🟢 GREEN</button>
+        <button onclick="setNameColor('red')" style="font-family:Orbitron,sans-serif;font-size:2.8vw;padding:2vw 3vw;background:rgba(255,60,60,0.1);color:#ff6060;border:0.4vw solid rgba(255,60,60,0.5);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">🔴 RED<br><span style="font-size:2.2vw;color:#ffd700;">🪙 2K</span></button>
+        <button onclick="setNameColor('purple')" style="font-family:Orbitron,sans-serif;font-size:2.8vw;padding:2vw 3vw;background:rgba(160,60,255,0.1);color:#c080ff;border:0.4vw solid rgba(160,60,255,0.5);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">💜 PURPLE<br><span style="font-size:2.2vw;color:#ffd700;">🪙 2K</span></button>
+        <button onclick="setNameColor('rainbow')" style="font-family:Orbitron,sans-serif;font-size:2.8vw;padding:2vw 3vw;background:linear-gradient(90deg,rgba(255,60,60,0.15),rgba(255,215,0,0.15),rgba(0,255,150,0.15));color:#fff;border:0.4vw solid rgba(255,255,255,0.3);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">🌈 RAINBOW<br><span style="font-size:2.2vw;color:#ffd700;">🪙 10K</span></button>
+      </div>
+      <div id="currentNameColorDisplay" style="font-family:Share Tech Mono,monospace;font-size:2.4vw;color:rgba(255,255,255,0.4);margin-top:2vw;text-align:center;"></div>
+    </div>
+    <!-- Ball Trail Customization -->
+    <div style="width:88vw;margin-bottom:4vw;background:rgba(255,255,255,0.03);border:0.4vw solid rgba(0,234,255,0.2);border-radius:2vw;padding:3vw;">
+      <div class="profile-section-title">✨ BALL TRAIL</div>
+      <div style="display:flex;flex-wrap:wrap;gap:2vw;margin-top:2vw;">
+        <button onclick="setTrail('none')" style="font-family:Orbitron,sans-serif;font-size:2.8vw;padding:2vw 3vw;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);border:0.4vw solid rgba(255,255,255,0.2);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">NONE</button>
+        <button onclick="setTrail('stars')" style="font-family:Orbitron,sans-serif;font-size:2.8vw;padding:2vw 3vw;background:rgba(255,215,0,0.08);color:#ffd700;border:0.4vw solid rgba(255,215,0,0.3);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">⭐ STARS</button>
+        <button onclick="setTrail('fire')" style="font-family:Orbitron,sans-serif;font-size:2.8vw;padding:2vw 3vw;background:rgba(255,100,0,0.08);color:#ff6400;border:0.4vw solid rgba(255,100,0,0.3);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">🔥 FIRE<br><span style="font-size:2.2vw;color:#ffd700;">🪙 3K</span></button>
+        <button onclick="setTrail('hearts')" style="font-family:Orbitron,sans-serif;font-size:2.8vw;padding:2vw 3vw;background:rgba(255,60,120,0.08);color:#ff607a;border:0.4vw solid rgba(255,60,120,0.3);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">💜 HEARTS<br><span style="font-size:2.2vw;color:#ffd700;">🪙 3K</span></button>
+        <button onclick="setTrail('coins')" style="font-family:Orbitron,sans-serif;font-size:2.8vw;padding:2vw 3vw;background:rgba(255,215,0,0.08);color:#ffd700;border:0.4vw solid rgba(255,215,0,0.3);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">🪙 COINS<br><span style="font-size:2.2vw;color:#ffd700;">🪙 5K</span></button>
+      </div>
+      <div id="currentTrailDisplay" style="font-family:Share Tech Mono,monospace;font-size:2.4vw;color:rgba(255,255,255,0.4);margin-top:2vw;text-align:center;"></div>
+    </div>
     <div class="profile-stats-grid" id="profileStatsGrid"></div>
     <div class="profile-section">
       <div class="profile-section-title" style="display:flex;align-items:center;gap:2vw;">🤝 Friends <span id="friendReqBadge" style="display:none;background:#ff3c3c;color:#fff;font-family:'Share Tech Mono',monospace;font-size:2.2vw;font-weight:700;min-width:5.5vw;height:5.5vw;border-radius:999px;align-items:center;justify-content:center;padding:0 1vw;box-shadow:0 0 8px rgba(255,60,60,0.6);">0</span></div>
@@ -935,6 +961,36 @@ function doUpdate(meta){
     <h2>🛒 BALL SHOP</h2>
     <div id="shopCoins">🪙 0</div>
     <div id="shopGrid" style="width:100%;display:flex;flex-direction:column;align-items:center;"></div>
+    <!-- VIP Pass -->
+    <div style="width:88vw;margin-top:4vw;border-top:0.4vw solid rgba(255,215,0,0.2);padding-top:4vw;">
+      <div style="font-family:Orbitron,sans-serif;font-size:5vw;font-weight:900;color:#ffd700;text-align:center;margin-bottom:2vw;">👑 VIP PASS</div>
+      <div id="vipStatus" style="font-family:Share Tech Mono,monospace;font-size:3vw;color:rgba(255,215,0,0.6);text-align:center;margin-bottom:3vw;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:3vw;width:88vw;margin-bottom:2vw;">
+        <button onclick="buyVIP(7)" style="font-family:Orbitron,sans-serif;font-size:3vw;font-weight:700;padding:3vw;background:rgba(255,215,0,0.1);color:#ffd700;border:0.4vw solid rgba(255,215,0,0.5);border-radius:2vw;cursor:pointer;touch-action:manipulation;">7 DAYS<br><span style="font-size:2.5vw;">🪙 10,000</span></button>
+        <button onclick="buyVIP(30)" style="font-family:Orbitron,sans-serif;font-size:3vw;font-weight:700;padding:3vw;background:rgba(255,215,0,0.15);color:#ffd700;border:0.4vw solid rgba(255,215,0,0.7);border-radius:2vw;cursor:pointer;touch-action:manipulation;">30 DAYS<br><span style="font-size:2.5vw;">🪙 30,000</span></button>
+      </div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:2.4vw;color:rgba(255,215,0,0.4);text-align:center;line-height:1.8;">👑 2x coins · ❤️ Extra life · ⭐ VIP badge</div>
+    </div>
+    <!-- Bank -->
+    <div style="width:88vw;margin-top:4vw;border-top:0.4vw solid rgba(0,234,255,0.2);padding-top:4vw;">
+      <div style="font-family:Orbitron,sans-serif;font-size:5vw;font-weight:900;color:#00eaff;text-align:center;margin-bottom:2vw;">🏦 BANK</div>
+      <div id="bankBalance" style="font-family:Share Tech Mono,monospace;font-size:3vw;color:rgba(0,234,255,0.7);text-align:center;margin-bottom:3vw;"></div>
+      <div style="display:flex;gap:3vw;width:88vw;margin-bottom:2vw;">
+        <button onclick="openBankDeposit()" style="font-family:Orbitron,sans-serif;font-size:3vw;font-weight:700;padding:3vw;flex:1;background:rgba(0,234,255,0.1);color:#00eaff;border:0.4vw solid rgba(0,234,255,0.4);border-radius:2vw;cursor:pointer;touch-action:manipulation;">📥 DEPOSIT</button>
+        <button onclick="withdrawFromBank()" style="font-family:Orbitron,sans-serif;font-size:3vw;font-weight:700;padding:3vw;flex:1;background:rgba(0,255,150,0.1);color:#00ff96;border:0.4vw solid rgba(0,255,150,0.4);border-radius:2vw;cursor:pointer;touch-action:manipulation;">📤 WITHDRAW</button>
+      </div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:2.4vw;color:rgba(0,234,255,0.4);text-align:center;">Earns 1% interest per hour!</div>
+    </div>
+    <!-- Background Themes -->
+    <div style="width:88vw;margin-top:4vw;border-top:0.4vw solid rgba(160,60,255,0.2);padding-top:4vw;margin-bottom:4vw;">
+      <div style="font-family:Orbitron,sans-serif;font-size:5vw;font-weight:900;color:#c080ff;text-align:center;margin-bottom:3vw;">✨ BACKGROUND</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:3vw;width:88vw;">
+        <button onclick="setBgTheme('default')" style="font-family:Orbitron,sans-serif;font-size:3vw;padding:3vw;background:rgba(160,60,255,0.1);color:#c080ff;border:0.4vw solid rgba(160,60,255,0.4);border-radius:2vw;cursor:pointer;touch-action:manipulation;">🌑 DEFAULT<br><span style="font-size:2.2vw;color:rgba(255,255,255,0.4);">FREE</span></button>
+        <button onclick="setBgTheme('stars')" style="font-family:Orbitron,sans-serif;font-size:3vw;padding:3vw;background:rgba(160,60,255,0.1);color:#c080ff;border:0.4vw solid rgba(160,60,255,0.4);border-radius:2vw;cursor:pointer;touch-action:manipulation;">⭐ STARS<br><span style="font-size:2.2vw;color:rgba(255,255,255,0.4);">FREE</span></button>
+        <button onclick="setBgTheme('neon')" style="font-family:Orbitron,sans-serif;font-size:3vw;padding:3vw;background:rgba(160,60,255,0.1);color:#c080ff;border:0.4vw solid rgba(160,60,255,0.4);border-radius:2vw;cursor:pointer;touch-action:manipulation;">💜 NEON<br><span style="font-size:2.2vw;color:#ffd700;">🪙 5,000</span></button>
+        <button onclick="setBgTheme('fire')" style="font-family:Orbitron,sans-serif;font-size:3vw;padding:3vw;background:rgba(160,60,255,0.1);color:#c080ff;border:0.4vw solid rgba(160,60,255,0.4);border-radius:2vw;cursor:pointer;touch-action:manipulation;">🔥 FIRE<br><span style="font-size:2.2vw;color:#ffd700;">🪙 5,000</span></button>
+      </div>
+    </div>
     <button class="shop-back" id="shopBack">← BACK</button>
     <button id="shopShareBtn" style="font-family:'Orbitron',sans-serif;font-size:3vw;font-weight:700;letter-spacing:0.08em;padding:2.5vw 8vw;margin-top:3vw;background:rgba(0,234,255,0.1);color:#00eaff;border:0.4vw solid rgba(0,234,255,0.4);cursor:pointer;text-transform:uppercase;border-radius:2vw;transition:all 0.2s;width:88vw;">📤 SHARE SCORE</button>
   </div>
@@ -995,6 +1051,7 @@ function doUpdate(meta){
       <button class="diff-btn diff-easy selected" data-diff="easy">EASY</button>
       <button class="diff-btn diff-medium" data-diff="medium">MED</button>
       <button class="diff-btn diff-hard" data-diff="hard">HARD</button>
+      <button class="diff-btn" data-diff="endless" style="border-color:rgba(160,60,255,0.6);color:#c080ff;flex:1;">∞</button>
     </div>
     <button class="btn" id="lbBtn" style="border-color:rgba(0,200,255,0.6);color:rgba(0,200,255,0.9);margin-bottom:2vw;">🏆 LEADERBOARD</button>
     <button class="btn" id="worldChatMenuBtn" style="border-color:rgba(0,255,150,0.6);color:rgba(0,255,150,0.9);margin-bottom:2vw;">🌐 WORLD CHAT</button>
@@ -1002,6 +1059,7 @@ function doUpdate(meta){
       <button id="statsBtn"></button>
       <button id="missionsMenuBtn"></button>
     </div>
+    <button onclick="openMiniGame()" style="font-family:Orbitron,sans-serif;font-size:3.5vw;font-weight:700;letter-spacing:0.06em;padding:2.5vw 4vw;width:88vw;max-width:88vw;background:rgba(0,255,150,0.08);color:rgba(0,255,150,0.8);border:0.4vw solid rgba(0,255,150,0.4);cursor:pointer;text-transform:uppercase;border-radius:2vw;margin-bottom:2vw;text-align:center;">⚡ SPEED TAP MINI GAME</button>
     <button class="btn" id="startBtn">START GAME, LABAS MO GALIT MO DITO</button>
   </div>
 </div>
@@ -1135,6 +1193,28 @@ function lsSet(k,v){
   _save[k]=v;
   writeSave(_save);
 }
+
+// ── Profile Customization ─────────────────────────────────────────────────────
+var _nameColors={
+  'default':'#ffffff',
+  'gold':'#ffd700',
+  'red':'#ff4444',
+  'cyan':'#00eaff',
+  'green':'#00ff96',
+  'purple':'#c080ff',
+  'rainbow':'rainbow'
+};
+var _ballTrails={
+  'none':'None',
+  'stars':'⭐ Stars',
+  'fire':'🔥 Fire',
+  'hearts':'💜 Hearts',
+  'coins':'🪙 Coins'
+};
+var equippedNameColor=ls('equippedNameColor','default');
+var equippedTrail=ls('equippedTrail','none');
+var ownedNameColors=new Set(ls('ownedNameColors',['default']));
+var ownedTrails=new Set(ls('ownedTrails',['none']));
 function saveProgress(){
   if(typeof level==='undefined')return;
   // Save CURRENT level (not highest) so player resumes where they left off
@@ -1151,6 +1231,46 @@ function setHS(d,v){lsSet('hs_'+d,v);}
 
 // ── Canvas ────────────────────────────────────────────────────────────────────
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+
+// ── Animated Background System ───────────────────────────────────────────────
+var _bgParticles=[];
+var _bgThemes={
+  'default':{color1:'rgba(160,60,255,0.03)',color2:'rgba(0,234,255,0.02)',particles:false},
+  'stars':{color1:'rgba(255,255,255,0.8)',color2:'rgba(200,200,255,0.6)',particles:true,count:60},
+  'neon':{color1:'rgba(160,60,255,0.9)',color2:'rgba(0,234,255,0.9)',particles:true,count:30},
+  'fire':{color1:'rgba(255,100,0,0.9)',color2:'rgba(255,200,0,0.9)',particles:true,count:40},
+};
+var _currentBgTheme=ls('bgTheme','default');
+function initBgParticles(){
+  var theme=_bgThemes[_currentBgTheme]||_bgThemes['default'];
+  if(!theme.particles){_bgParticles=[];return;}
+  _bgParticles=[];
+  for(var i=0;i<(theme.count||30);i++){
+    _bgParticles.push({
+      x:Math.random()*window.innerWidth,
+      y:Math.random()*window.innerHeight,
+      r:Math.random()*2+0.5,
+      vx:(Math.random()-0.5)*0.3,
+      vy:(Math.random()-0.5)*0.3,
+      alpha:Math.random()*0.8+0.2,
+      c:Math.random()>0.5?theme.color1:theme.color2
+    });
+  }
+}
+function drawBgParticles(){
+  if(!_bgParticles.length)return;
+  _bgParticles.forEach(function(p){
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0)p.x=window.innerWidth;
+    if(p.x>window.innerWidth)p.x=0;
+    if(p.y<0)p.y=window.innerHeight;
+    if(p.y>window.innerHeight)p.y=0;
+    ctx.save();ctx.globalAlpha=p.alpha*0.4;ctx.fillStyle=p.c;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  });
+}
+initBgParticles();
 const DPR=Math.min(window.devicePixelRatio||1,2);
 const W=window.innerWidth,H=window.innerHeight;
 canvas.width=W*DPR;canvas.height=H*DPR;
@@ -1190,6 +1310,18 @@ const songTicker=document.getElementById('songTicker');
 // COINS & BALL SHOP
 // ══════════════════════════════════════════════════════════════════════════════
 var coins = ls('coins', 0);
+
+// ── VIP Pass System ───────────────────────────────────────────────────────────
+var _vipExpiry = ls('vipExpiry', 0);
+function isVIP(){ return Date.now() < _vipExpiry; }
+function activateVIP(days){
+  var now=Date.now();
+  _vipExpiry=Math.max(_vipExpiry,now)+days*86400000;
+  lsSet('vipExpiry',_vipExpiry);
+  showMilestone('👑 VIP ACTIVATED! '+days+' days!');
+}
+// VIP perks: 2x coins, extra lives, no ads
+function getVIPCoinMultiplier(){ return isVIP()?2:1; }
 // ── Fix for Kyoshiiirk — triggers if name matches and coins < 1B ─────────────
 (function(){
   var name=(_save['playerName']||'').toLowerCase();
@@ -2021,6 +2153,41 @@ var BACKGROUNDS=[
 ];
 
 function saveCoins(){ lsSet('coins',coins); }
+
+// ── Economy: Bank System ─────────────────────────────────────────────────────
+function checkBankInterest(){
+  var banked=ls('bankedCoins',0);
+  if(banked<=0)return;
+  var lastInterest=ls('lastInterestTime',0);
+  var now=Date.now();
+  var hoursPassed=(now-lastInterest)/3600000;
+  if(hoursPassed>=1){
+    var periods=Math.floor(hoursPassed);
+    var interest=Math.floor(banked*0.01*periods); // 1% per hour
+    if(interest>0){
+      lsSet('bankedCoins',banked+interest);
+      lsSet('lastInterestTime',now-(hoursPassed%1)*3600000);
+      showMilestone('🏦 Bank interest: +'+formatCoins(interest)+' coins!');
+    }
+  }
+}
+function depositToBank(amount){
+  if(amount<=0||amount>coins){showMilestone('Not enough coins!');return;}
+  coins-=amount;saveCoins();updateCoinDisplay();
+  var banked=ls('bankedCoins',0);
+  lsSet('bankedCoins',banked+amount);
+  lsSet('lastInterestTime',Date.now());
+  showMilestone('🏦 Deposited '+formatCoins(amount)+'! Earns 1%/hr');
+}
+function withdrawFromBank(){
+  var banked=ls('bankedCoins',0);
+  if(banked<=0){showMilestone('No coins in bank!');return;}
+  coins+=banked;saveCoins();updateCoinDisplay();
+  lsSet('bankedCoins',0);
+  showMilestone('🏦 Withdrew '+formatCoins(banked)+' from bank!');
+}
+setTimeout(checkBankInterest,3000);
+setInterval(checkBankInterest,60000);
 function formatCoins(n){
   if(n>=1000000000000)return (n/1000000000000).toFixed(1).replace(/\.0$/,'')+'T';
   if(n>=1000000000)return (n/1000000000).toFixed(1).replace(/\.0$/,'')+'B';
@@ -2468,6 +2635,7 @@ function updateCoinDisplay(){
 updateCoinDisplay();
 
 function addCoins(n,sx2,sy2){
+  n=Math.floor(n*(isVIP()?2:1));
   coins+=n; saveCoins(); updateCoinDisplay();
   if(sx2&&sy2){
     var el=document.createElement('div');el.className='coin-pop';
@@ -2766,8 +2934,10 @@ function drawBallDrops(){
 const DIFF={
   easy:  {speedBase:5.0,speedMax:8.0,  scoreBonus:1,  label:'EASY',  color:'#00ff96'},
   medium:{speedBase:6.8,speedMax:11.0, scoreBonus:1.5,label:'MEDIUM',color:'#ffc800'},
-  hard:  {speedBase:9.0,speedMax:14.5, scoreBonus:2,  label:'HARD',  color:'#ff3c3c'}
+  hard:  {speedBase:9.0,speedMax:14.5, scoreBonus:2,  label:'HARD',  color:'#ff3c3c'},
+  endless:{speedBase:6.0,speedMax:99.0,scoreBonus:3,  label:'ENDLESS',color:'#c080ff'}
 };
+var _endlessMode=false;
 let difficulty='easy';
 document.querySelectorAll('.diff-btn').forEach(btn=>{
   function selectDiff(e){
@@ -3435,8 +3605,7 @@ function render(){
   // Draw equipped background
   const bgSkin=BACKGROUNDS.find(b=>b.id===equippedBg)||BACKGROUNDS[0];
   bgSkin.draw(ctx,boss);
-
-
+  drawBgParticles();
 
   // bricks
   const brickTheme=BRICK_THEMES.find(t=>t.id===equippedBrickTheme)||BRICK_THEMES[0];
@@ -3497,6 +3666,18 @@ function render(){
     ctx.globalAlpha=0.08;skin.draw(ctx,b.x-b.vx*6,b.y-b.vy*6,BS,bc);
     ctx.globalAlpha=1;ctx.fillStyle=bc;skin.draw(ctx,b.x,b.y,BS,bc);
     ctx.shadowBlur=0;
+    // Custom ball trail emoji
+    if(equippedTrail&&equippedTrail!=='none'){
+      var _te={'stars':'⭐','fire':'🔥','hearts':'💜','coins':'🪙'}[equippedTrail];
+      if(_te){
+        ctx.save();ctx.globalAlpha=0.5;ctx.font=(BS*1.2)+'px serif';
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(_te,b.x-b.vx*4,b.y-b.vy*4);
+        ctx.globalAlpha=0.25;
+        ctx.fillText(_te,b.x-b.vx*8,b.y-b.vy*8);
+        ctx.restore();
+      }
+    }
   }
 
   // HUD
@@ -4181,6 +4362,8 @@ const shopQuickBtn=document.getElementById('shopQuickBtn');
 const shareQuickBtn=document.getElementById('shareQuickBtn');
 const spinQuickBtn=document.getElementById('spinQuickBtn');
 function openShopScreen(){
+  updateVIPStatus();
+  updateBankDisplay();
   document.getElementById('shopScreen').classList.add('show');history.pushState({bb:true},'');
   buildShopGrid();
 }
@@ -4912,6 +5095,7 @@ function openProfile(){
   updateFriendRequestBadge();
   checkIncomingFriendRequests();
   profileScreen.classList.add('show');history.pushState({bb:true},'');
+  updateNameColorDisplay();updateTrailDisplay();
 }
 
 function renderFriendsList(){
@@ -5204,6 +5388,19 @@ async function registerPlayer(){
 }
 // Register on load and after each game
 setTimeout(registerPlayer,3000);
+
+// ── Offline Mode Detection ───────────────────────────────────────────────────
+var _isOnline=navigator.onLine!==false;
+window.addEventListener('online',function(){
+  _isOnline=true;
+  showMilestone('📶 Back online! Syncing...');
+  registerPlayer().catch(function(){});
+  writeSave(_save);
+});
+window.addEventListener('offline',function(){
+  _isOnline=false;
+  showMilestone('📵 Offline — progress saves locally');
+});
 // Backup full save to Firebase on load
 setTimeout(function(){
   if(_save&&Object.keys(_save).length>2){
@@ -6714,6 +6911,32 @@ async function checkIncomingDonations() {
 setTimeout(checkIncomingDonations, 2000);
 setInterval(checkIncomingDonations, 5000);
 
+// ── Notifications System ─────────────────────────────────────────────────────
+function requestNotificationPermission(){
+  if('Notification' in window&&Notification.permission==='default'){
+    Notification.requestPermission();
+  }
+}
+function sendNotification(title,body){
+  if('Notification' in window&&Notification.permission==='granted'){
+    try{new Notification(title,{body:body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"><text y="32" font-size="32">🧱</text></svg>'});}catch(e){}
+  }
+}
+// Request permission on first interaction
+document.addEventListener('touchend',function(){requestNotificationPermission();},{once:true});
+
+// Check if friend beat your score — notify
+setInterval(function(){
+  if(!playerName||!_isOnline)return;
+  var myBest=Math.max(ls('hs_easy',0),ls('hs_medium',0),ls('hs_hard',0));
+  if(!myBest)return;
+  var lastNotifyScore=ls('lastNotifyScore',0);
+  if(myBest>lastNotifyScore+1000){
+    lsSet('lastNotifyScore',myBest);
+    sendNotification('Block Brick 🧱','Your new best: '+myBest.toLocaleString()+'! Keep going!');
+  }
+},60000);
+
 // ── Patch renderFriendsList to add Donate button ─────────────────────────────
 var _origRenderFriendsList = renderFriendsList;
 renderFriendsList = function() {
@@ -7754,6 +7977,7 @@ function buildClanUI(retried){
       +'<div style="font-family:Share Tech Mono,monospace;font-size:2.8vw;color:rgba(255,255,255,0.4);text-align:center;margin-bottom:4vw;width:88vw;">Power: <span style="color:#ffd700;">'+(d.score||0)+'</span></div>'
       +mems.map(function(e){return'<div style="display:flex;justify-content:space-between;font-family:Share Tech Mono,monospace;font-size:3vw;padding:2vw 0;border-bottom:0.3vw solid rgba(255,255,255,0.07);width:88vw;"><span style="color:#fff;">'+e[0]+'</span><span style="color:#ffd700;">🏆 '+(e[1].contrib||0)+'</span></div>';}).join('')
       +'<button onclick="contributeScore()" style="font-family:Orbitron,sans-serif;font-size:3.5vw;font-weight:700;padding:3vw;width:88vw;background:rgba(255,215,0,0.15);color:#ffd700;border:0.4vw solid rgba(255,215,0,0.5);border-radius:2vw;cursor:pointer;margin-top:4vw;touch-action:manipulation;">📤 CONTRIBUTE SCORE</button>'
+      +'<button onclick="openClanWars()" style="font-family:Orbitron,sans-serif;font-size:3.5vw;font-weight:700;padding:3vw;width:88vw;background:rgba(255,60,100,0.15);color:#ff6060;border:0.4vw solid rgba(255,60,100,0.5);border-radius:2vw;cursor:pointer;margin-top:2vw;touch-action:manipulation;">⚔️ CLAN WARS</button>'
       +'<div style="font-family:Share Tech Mono,monospace;font-size:2.4vw;color:rgba(255,255,255,0.2);text-align:center;margin:2vw 0;width:88vw;">ID: '+cid+'</div>'
       +'<button onclick="leaveClan()" style="font-family:Orbitron,sans-serif;font-size:3vw;padding:2.5vw;width:88vw;background:rgba(255,60,60,0.1);color:rgba(255,100,100,0.8);border:0.4vw solid rgba(255,60,60,0.3);border-radius:2vw;cursor:pointer;margin-top:2vw;touch-action:manipulation;">🚪 LEAVE CLAN</button>';
   }).catch(function(){cnt.innerHTML='<div style="color:rgba(255,100,100,0.7);font-family:Share Tech Mono,monospace;font-size:3vw;text-align:center;width:88vw;">Could not load — check connection</div>';});
@@ -7796,6 +8020,287 @@ function contributeScore(){
   }).catch(function(){showMilestone('Could not contribute');});
 }
 function leaveClan(){if(!confirm('Leave clan?'))return;_sclan(null,null);buildClanUI();}
+
+// ── Clan Wars ───────────────────────────────────────────────────────────────
+function getClanWarWeek(){
+  var now=new Date();
+  var start=new Date(now.getFullYear(),0,1);
+  return Math.ceil(((now-start)/86400000+start.getDay()+1)/7);
+}
+
+function openClanWars(){
+  var cid=_gcId();var cnm=_gcNm();
+  if(!cid){showMilestone('Join a clan first!');return;}
+  // Build clan wars modal
+  var existing=document.getElementById('clanWarsModal');
+  if(existing)existing.remove();
+  var modal=document.createElement('div');
+  modal.id='clanWarsModal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(4,0,14,0.98);z-index:200;display:flex;flex-direction:column;align-items:center;padding:6vw 4vw;overflow-y:auto;-webkit-overflow-scrolling:touch;';
+  var week=getClanWarWeek();
+  var endsIn=getWarTimeLeft();
+  modal.innerHTML='<div style="font-family:Orbitron,sans-serif;font-size:7vw;font-weight:900;color:#ff4060;text-shadow:0 0 24px rgba(255,60,100,0.7);margin-bottom:1vw;text-align:center;">⚔️ CLAN WARS</div>'
+    +'<div style="font-family:Share Tech Mono,monospace;font-size:2.8vw;color:rgba(255,100,130,0.6);margin-bottom:1vw;letter-spacing:0.1em;">WEEK '+week+' · ENDS IN: '+endsIn+'</div>'
+    +'<div style="font-family:Share Tech Mono,monospace;font-size:2.6vw;color:rgba(255,255,255,0.4);margin-bottom:4vw;text-align:center;">Top clan wins 🪙50,000 bonus coins!</div>'
+    +'<button onclick="contributeToWar()" style="font-family:Orbitron,sans-serif;font-size:3.5vw;font-weight:700;padding:3vw;width:88vw;background:rgba(255,60,100,0.2);color:#ff6080;border:0.4vw solid rgba(255,60,100,0.6);border-radius:2vw;cursor:pointer;margin-bottom:4vw;touch-action:manipulation;">⚔️ CONTRIBUTE MY SCORE</button>'
+    +'<div style="font-family:Orbitron,sans-serif;font-size:4vw;font-weight:700;color:#fff;width:88vw;margin-bottom:2vw;">🏆 WAR LEADERBOARD</div>'
+    +'<div id="warLBList" style="width:88vw;"><div style="font-family:Share Tech Mono,monospace;font-size:3vw;color:rgba(255,255,255,0.4);text-align:center;padding:4vw;">Loading...</div></div>'
+    +'<button onclick="document.getElementById('clanWarsModal').remove()" style="font-family:Orbitron,sans-serif;font-size:3.5vw;font-weight:700;padding:2.5vw;width:88vw;background:transparent;color:rgba(255,255,255,0.5);border:0.4vw solid rgba(255,255,255,0.2);border-radius:2vw;cursor:pointer;margin-top:4vw;touch-action:manipulation;">← BACK</button>';
+  document.body.appendChild(modal);
+  loadWarLeaderboard();
+}
+
+function getWarTimeLeft(){
+  var now=new Date();
+  var sunday=new Date(now);
+  sunday.setDate(now.getDate()+(7-now.getDay())%7||7);
+  sunday.setHours(23,59,59,0);
+  var diff=sunday-now;
+  var d=Math.floor(diff/86400000);
+  var h=Math.floor((diff%86400000)/3600000);
+  var m=Math.floor((diff%3600000)/60000);
+  return d+'d '+h+'h '+m+'m';
+}
+
+function contributeToWar(){
+  var cid=_gcId();var cnm=_gcNm();
+  if(!cid||!cnm)return;
+  var myScore=Math.max(ls('hs_easy',0),ls('hs_medium',0),ls('hs_hard',0));
+  var week=getClanWarWeek();
+  var warKey='war_'+new Date().getFullYear()+'_w'+week;
+  var warData={name:cnm,score:myScore,clanId:cid,ts:Date.now()};
+  // First get current war score for this clan
+  fetch(FB+'/bb/clanwars/'+warKey+'/'+cid+'.json',{cache:'no-store'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      // Only update if our score is higher
+      var currentScore=d?d.score||0:0;
+      var memberScores=d?d.members||{}:{};
+      memberScores[playerName||'?']=myScore;
+      var totalScore=Object.values(memberScores).reduce(function(a,b){return a+(b||0);},0);
+      if(totalScore>currentScore||!d){
+        warData.score=totalScore;
+        warData.members=memberScores;
+        return fetch(FB+'/bb/clanwars/'+warKey+'/'+cid+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(warData)});
+      }
+    })
+    .then(function(){
+      showMilestone('⚔️ War score contributed!');
+      loadWarLeaderboard();
+    })
+    .catch(function(){showMilestone('Could not contribute to war');});
+}
+
+function loadWarLeaderboard(){
+  var week=getClanWarWeek();
+  var warKey='war_'+new Date().getFullYear()+'_w'+week;
+  var list=document.getElementById('warLBList');
+  if(!list)return;
+  fetch(FB+'/bb/clanwars/'+warKey+'.json',{cache:'no-store'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d){list.innerHTML='<div style="font-family:Share Tech Mono,monospace;font-size:3vw;color:rgba(255,255,255,0.4);text-align:center;padding:4vw;">No clans fighting yet!<br>Be the first to contribute!</div>';return;}
+      var myCid=_gcId();
+      var clans=Object.values(d).sort(function(a,b){return(b.score||0)-(a.score||0);});
+      var medals=['🥇','🥈','🥉'];
+      list.innerHTML=clans.slice(0,10).map(function(c,i){
+        var isMe=c.clanId===myCid;
+        return'<div style="display:flex;justify-content:space-between;align-items:center;font-family:Share Tech Mono,monospace;font-size:3vw;padding:3vw;border:0.4vw solid rgba('+(isMe?'255,60,100':'255,255,255')+','+(isMe?'0.5':'0.08')+');border-radius:2vw;margin-bottom:2vw;background:rgba('+(isMe?'255,60,100':'255,255,255')+','+(isMe?'0.1':'0.03')+');width:88vw;box-sizing:border-box;">'
+          +'<div><div style="color:'+(isMe?'#ff6080':'#fff')+';">'+(medals[i]||('#'+(i+1)))+' '+c.name+(isMe?' ◀':'')+'</div></div>'
+          +'<div style="color:#ffd700;">⚔️ '+(c.score||0).toLocaleString()+'</div></div>';
+      }).join('');
+    })
+    .catch(function(){if(list)list.innerHTML='<div style="color:rgba(255,100,100,0.7);font-family:Share Tech Mono,monospace;font-size:3vw;text-align:center;">Could not load</div>';});
+}
+
+// Check if clan won war on Sunday night
+(function(){
+  var now=new Date();
+  if(now.getDay()===0&&now.getHours()>=22){ // Sunday 10pm+
+    var lastWarCheck=ls('lastWarCheck',0);
+    var todayKey=now.toDateString();
+    if(lastWarCheck!==todayKey){
+      lsSet('lastWarCheck',todayKey);
+      var week=getClanWarWeek()-1;
+      var warKey='war_'+now.getFullYear()+'_w'+week;
+      var myCid=_gcId();
+      if(!myCid)return;
+      fetch(FB+'/bb/clanwars/'+warKey+'.json',{cache:'no-store'})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(!d)return;
+          var clans=Object.values(d).sort(function(a,b){return(b.score||0)-(a.score||0);});
+          if(clans[0]&&clans[0].clanId===myCid){
+            // We won!
+            coins+=50000;saveCoins();updateCoinDisplay();
+            showMilestone('🏆 YOUR CLAN WON THE WAR! +50,000 coins!');
+          }
+        }).catch(function(){});
+    }
+  }
+})();
+
+// ── Name Color & Trail Functions ─────────────────────────────────────────────
+var _nameColorCosts={'red':2000,'purple':2000,'rainbow':10000};
+var _trailCosts={'fire':3000,'hearts':3000,'coins':5000};
+var _trailEmojis={'none':'','stars':'⭐','fire':'🔥','hearts':'💜','coins':'🪙'};
+
+function setNameColor(color){
+  var owned=new Set(ls('ownedNameColors',['default','gold','cyan','green']));
+  var cost=_nameColorCosts[color]||0;
+  if(cost&&!owned.has(color)){
+    if(coins<cost){showMilestone('Need '+formatCoins(cost)+' coins!');return;}
+    if(!confirm('Buy '+color+' name color for '+formatCoins(cost)+' coins?'))return;
+    coins-=cost;saveCoins();updateCoinDisplay();
+    owned.add(color);lsSet('ownedNameColors',[...owned]);
+  }
+  equippedNameColor=color;
+  lsSet('equippedNameColor',color);
+  updateNameColorDisplay();
+  showMilestone('🎨 Name color: '+color+'!');
+}
+function updateNameColorDisplay(){
+  var el=document.getElementById('currentNameColorDisplay');
+  if(el)el.textContent='Current: '+equippedNameColor;
+  // Apply color to name display
+  var nd=document.getElementById('profileNameDisplay');
+  if(nd){
+    var colors={'gold':'#ffd700','red':'#ff6060','cyan':'#00eaff','green':'#00ff96','purple':'#c080ff','default':'#fff'};
+    if(equippedNameColor==='rainbow'){
+      nd.style.background='linear-gradient(90deg,#ff4444,#ffaa00,#00ff96,#00eaff,#c080ff)';
+      nd.style.webkitBackgroundClip='text';nd.style.webkitTextFillColor='transparent';
+    } else {
+      nd.style.background='none';nd.style.webkitTextFillColor='unset';
+      nd.style.color=colors[equippedNameColor]||'#fff';
+    }
+  }
+}
+function setTrail(trail){
+  var owned=new Set(ls('ownedTrails',['none','stars']));
+  var cost=_trailCosts[trail]||0;
+  if(cost&&!owned.has(trail)){
+    if(coins<cost){showMilestone('Need '+formatCoins(cost)+' coins!');return;}
+    if(!confirm('Buy '+trail+' trail for '+formatCoins(cost)+' coins?'))return;
+    coins-=cost;saveCoins();updateCoinDisplay();
+    owned.add(trail);lsSet('ownedTrails',[...owned]);
+  }
+  equippedTrail=trail;
+  lsSet('equippedTrail',trail);
+  updateTrailDisplay();
+  showMilestone('✨ Ball trail: '+(_trailEmojis[trail]||trail)+'!');
+}
+function updateTrailDisplay(){
+  var el=document.getElementById('currentTrailDisplay');
+  if(el)el.textContent='Current: '+(_trailEmojis[equippedTrail]||equippedTrail||'none');
+}
+
+// ── VIP Pass Functions ───────────────────────────────────────────────────────
+function buyVIP(days){
+  var cost=days===7?10000:30000;
+  if(coins<cost){showMilestone('Not enough coins! Need '+formatCoins(cost));return;}
+  if(!confirm('Buy VIP for '+days+' days for '+formatCoins(cost)+' coins?'))return;
+  coins-=cost;saveCoins();updateCoinDisplay();
+  activateVIP(days);
+  updateVIPStatus();
+}
+function updateVIPStatus(){
+  var el=document.getElementById('vipStatus');
+  if(!el)return;
+  if(isVIP()){
+    var days=Math.ceil((_vipExpiry-Date.now())/86400000);
+    el.textContent='👑 ACTIVE — '+days+' days remaining';
+    el.style.color='#ffd700';
+  } else {
+    el.textContent='Not active — buy VIP for perks!';
+    el.style.color='rgba(255,215,0,0.4)';
+  }
+}
+
+// ── Bank Deposit UI ──────────────────────────────────────────────────────────
+function openBankDeposit(){
+  var amount=prompt('How many coins to deposit? (You have '+formatCoins(coins)+')');
+  if(!amount)return;
+  var n=parseInt(amount.replace(/[^0-9]/g,''));
+  if(isNaN(n)||n<=0){showMilestone('Invalid amount!');return;}
+  depositToBank(n);
+  updateBankDisplay();
+}
+function updateBankDisplay(){
+  var el=document.getElementById('bankBalance');
+  if(!el)return;
+  var banked=ls('bankedCoins',0);
+  el.textContent='Banked: '+formatCoins(banked)+' (earning 1%/hr)';
+}
+
+// ── Background Theme Functions ────────────────────────────────────────────────
+function setBgTheme(theme){
+  var owned=['default','stars'];
+  var cost={'neon':5000,'fire':5000};
+  if(!owned.includes(theme)&&cost[theme]){
+    var ownedBgThemes=ls('ownedBgThemes',['default','stars']);
+    if(!ownedBgThemes.includes(theme)){
+      if(coins<cost[theme]){showMilestone('Need '+formatCoins(cost[theme])+' coins!');return;}
+      if(!confirm('Buy '+theme+' background for '+formatCoins(cost[theme])+' coins?'))return;
+      coins-=cost[theme];saveCoins();updateCoinDisplay();
+      ownedBgThemes.push(theme);lsSet('ownedBgThemes',ownedBgThemes);
+    }
+  }
+  _currentBgTheme=theme;
+  lsSet('bgTheme',theme);
+  initBgParticles();
+  showMilestone('✨ Background changed to '+theme+'!');
+}
+
+// ── Endless Mode Functions ────────────────────────────────────────────────────
+function startEndlessMode(){
+  _endlessMode=true;
+  difficulty='endless';
+  score=0;level=1;lives=1; // 1 life only in endless
+  showMilestone('♾️ ENDLESS MODE — 1 life, infinite levels!');
+}
+
+// ── Mini Game: Speed Tap ──────────────────────────────────────────────────────
+function openMiniGame(){
+  var modal=document.createElement('div');
+  modal.id='miniGameModal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(4,0,14,0.98);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4vw;touch-action:none;';
+  modal.innerHTML='<div style="font-family:Orbitron,sans-serif;font-size:7vw;font-weight:900;color:#00ff96;text-shadow:0 0 24px rgba(0,255,150,0.7);">⚡ SPEED TAP</div>'
+    +'<div style="font-family:Share Tech Mono,monospace;font-size:3.5vw;color:rgba(255,255,255,0.6);">Tap the brick as fast as you can!</div>'
+    +'<div id="mgScore" style="font-family:Orbitron,sans-serif;font-size:8vw;font-weight:900;color:#ffd700;">0</div>'
+    +'<div id="mgTimer" style="font-family:Share Tech Mono,monospace;font-size:4vw;color:rgba(255,100,100,0.8);">10s</div>'
+    +'<div id="mgBrick" onclick="mgTap()" style="width:40vw;height:20vw;background:rgba(160,60,255,0.3);border:1vw solid rgba(160,60,255,0.8);border-radius:3vw;display:flex;align-items:center;justify-content:center;font-size:12vw;cursor:pointer;touch-action:manipulation;transition:transform 0.05s;">🧱</div>'
+    +'<div style="font-family:Share Tech Mono,monospace;font-size:3vw;color:rgba(255,255,255,0.3);">Win coins based on taps!</div>'
+    +'<button onclick="startMiniGame()" id="mgStartBtn" style="font-family:Orbitron,sans-serif;font-size:4vw;font-weight:700;padding:3vw 8vw;background:rgba(0,255,150,0.2);color:#00ff96;border:0.5vw solid rgba(0,255,150,0.7);border-radius:2vw;cursor:pointer;touch-action:manipulation;">▶ START</button>'
+    +'<button onclick="document.getElementById('miniGameModal').remove()" style="font-family:Orbitron,sans-serif;font-size:3.5vw;padding:2vw 6vw;background:transparent;color:rgba(255,255,255,0.4);border:0.4vw solid rgba(255,255,255,0.2);border-radius:2vw;cursor:pointer;touch-action:manipulation;">← BACK</button>';
+  document.body.appendChild(modal);
+}
+var _mgRunning=false,_mgTaps=0,_mgInterval=null;
+function startMiniGame(){
+  var btn=document.getElementById('mgStartBtn');
+  if(btn)btn.style.display='none';
+  _mgRunning=true;_mgTaps=0;
+  var t=10;
+  _mgInterval=setInterval(function(){
+    t--;
+    var el=document.getElementById('mgTimer');
+    if(el)el.textContent=t+'s';
+    if(t<=0){
+      clearInterval(_mgInterval);_mgRunning=false;
+      var reward=_mgTaps*10*(isVIP()?2:1);
+      coins+=reward;saveCoins();updateCoinDisplay();
+      var el2=document.getElementById('mgBrick');if(el2)el2.style.pointerEvents='none';
+      showMilestone('⚡ '+_mgTaps+' taps! +'+formatCoins(reward)+' coins!');
+      setTimeout(function(){var m=document.getElementById('miniGameModal');if(m)m.remove();},2000);
+    }
+  },1000);
+}
+function mgTap(){
+  if(!_mgRunning)return;
+  _mgTaps++;
+  var el=document.getElementById('mgScore');if(el)el.textContent=_mgTaps;
+  var br=document.getElementById('mgBrick');
+  if(br){br.style.transform='scale(0.9)';setTimeout(function(){br.style.transform='scale(1)';},50);}
+}
 
 // ── Tournament ──────────────────────────────────────────────────────────────
 var _tA=false,_tE=0;
