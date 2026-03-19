@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 60;
+var CURRENT_VERSION = 61;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v60</div>
+<div id="versionBadge">v61</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -1042,9 +1042,14 @@ function _restoreFromFirebase(){
   fetch(FB+'/bb/saves/'+pid+'.json',{cache:'no-store'})
     .then(function(r){return r.json();})
     .then(function(d){
-      if(!d||!d.savedLevel||d.savedLevel<2)return;
-      // Restore all saved data
+      if(!d)return;
+      // Restore all saved data from Firebase
       Object.keys(d).forEach(function(k){_save[k]=d[k];});
+      // Make sure savedLevel is set correctly
+      if(d.savedLevel&&d.savedLevel>1){
+        _save['savedLevel']=d.savedLevel;
+        _save['highestLevel']=d.highestLevel||d.savedLevel;
+      }
       writeSave(_save);
       setTimeout(function(){window.location.reload();},500);
     }).catch(function(){});
@@ -3363,6 +3368,12 @@ function update(ts){
     // Do NOT reset lives here — lives persist across levels so players keep what they earned/bought
     saveProgress();
     writeSave(_save); // force-flush immediately so closing app right now still saves
+    // Also push to Firebase immediately so crash won't lose progress
+    if(typeof playerId!=='undefined'&&playerId){
+      var _lvlSave={savedLevel:level,highestLevel:_save['highestLevel']||level,totalLevels:totalLevels||level};
+      fetch(FB+'/bb/saves/'+playerId+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(_lvlSave)}).catch(function(){});
+      fetch(FB+'/bb/players/'+playerId+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({level:level,id:playerId})}).catch(function(){});
+    }
     [{lvl:1,id:'lvl1'},{lvl:5,id:'lvl5'},{lvl:10,id:'lvl10'},{lvl:20,id:'lvl20'},{lvl:50,id:'lvl50'},{lvl:100,id:'lvl100'}]
       .forEach(t=>{if(lvlDone===t.lvl)awardTrophy(t.id);});
     checkRankTrophies();
