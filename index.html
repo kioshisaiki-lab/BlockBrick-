@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 58;
+var CURRENT_VERSION = 59;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v58</div>
+<div id="versionBadge">v59</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -3789,19 +3789,19 @@ document.getElementById('settingsMenuBtn').addEventListener('click',()=>{
 
 // ── Playlist ──────────────────────────────────────────────────────────────────
 const SONG_NAMES={
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/01_Kalapastangan.mp3':'Kalapastangan',
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/02_Risk_It_All.mp3':'Risk It All - Bruno Mars',
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/03_The_Man_Who_Cant_Be_Moved.mp3':'The Man Who Can\'t Be Moved',
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/05_Lifetime.mp3':'Lifetime - Ben&Ben',
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/06_Do_I_Wanna_Know.mp3':'Do I Wanna Know - Arctic Monkeys',
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/07_Sagip.mp3':'Sagip',
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/08_Hirap_Kalimutan.mp3':'Hirap Kalimutan',
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/09_Tensionado.mp3':'Tensionado - Soapdish',
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/10_Panata.mp3':'Panata - Tothapi',
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/11_Back_To_Friends.mp3':'Back To Friends - sombr',
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/12_Ngayon_Kailanman.mp3':'Ngayon Kailanman',
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/Lord_Huron_-_The_Night_We_Met__Official_Audio___KtlgYxa6BMU_.mp3':'The Night We Met - Lord Huron',
-  'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/ngayon_at_kailanman.mp3':'Ngayon at Kailanman',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/01_Kalapastangan.mp3':'Kalapastangan',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/02_Risk_It_All.mp3':'Risk It All - Bruno Mars',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/03_The_Man_Who_Cant_Be_Moved.mp3':'The Man Who Can\'t Be Moved',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/05_Lifetime.mp3':'Lifetime - Ben&Ben',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/06_Do_I_Wanna_Know.mp3':'Do I Wanna Know - Arctic Monkeys',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/07_Sagip.mp3':'Sagip',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/08_Hirap_Kalimutan.mp3':'Hirap Kalimutan',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/09_Tensionado.mp3':'Tensionado - Soapdish',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/10_Panata.mp3':'Panata - Tothapi',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/11_Back_To_Friends.mp3':'Back To Friends - sombr',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/12_Ngayon_Kailanman.mp3':'Ngayon Kailanman',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/Lord_Huron_-_The_Night_We_Met__Official_Audio___KtlgYxa6BMU_.mp3':'The Night We Met - Lord Huron',
+  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/ngayon_at_kailanman.mp3':'Ngayon at Kailanman',
 };
 var SONGS=Object.keys(SONG_NAMES);
 var musicOn=true,currentIdx=-1,currentSongName='',audio=new Audio();audio.volume=0.75;
