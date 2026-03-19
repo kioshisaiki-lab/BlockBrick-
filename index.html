@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 38;
+var CURRENT_VERSION = 39;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v38</div>
+<div id="versionBadge">v39</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -1964,6 +1964,13 @@ var BACKGROUNDS=[
 ];
 
 function saveCoins(){ lsSet('coins',coins); }
+function formatCoins(n){
+  if(n>=1000000000000)return (n/1000000000000).toFixed(1).replace(/\.0$/,'')+'T';
+  if(n>=1000000000)return (n/1000000000).toFixed(1).replace(/\.0$/,'')+'B';
+  if(n>=1000000)return (n/1000000).toFixed(1).replace(/\.0$/,'')+'M';
+  if(n>=1000)return (n/1000).toFixed(1).replace(/\.0$/,'')+'K';
+  return String(Math.floor(n));
+}
 function saveOwnedSkins(){ lsSet('ownedSkins',[...ownedSkins]); }
 function saveEquipped(){ lsSet('equippedSkin',equippedSkin); }
 function saveOwnedPaddles(){ lsSet('ownedPaddles',[...ownedPaddles]); }
@@ -2398,8 +2405,8 @@ var BRICK_THEMES=[
 
 
 function updateCoinDisplay(){
-  document.getElementById('coinDisplay').textContent='🪙 '+coins;
-  document.getElementById('shopCoins').textContent='🪙 '+coins;
+  document.getElementById('coinDisplay').textContent='🪙 '+formatCoins(coins);
+  document.getElementById('shopCoins').textContent='🪙 '+formatCoins(coins);
 }
 updateCoinDisplay();
 
@@ -2407,7 +2414,7 @@ function addCoins(n,sx2,sy2){
   coins+=n; saveCoins(); updateCoinDisplay();
   if(sx2&&sy2){
     var el=document.createElement('div');el.className='coin-pop';
-    el.textContent='+'+n+'🪙';el.style.left=sx2+'px';el.style.top=sy2+'px';
+    el.textContent='+'+formatCoins(n)+'🪙';el.style.left=sx2+'px';el.style.top=sy2+'px';
     document.body.appendChild(el);setTimeout(function(){el.remove();},900);
   }
 }
@@ -3941,7 +3948,7 @@ function doSpin(){
   if(spinRunning)return;
   if(coins<SPIN_COST){spinResult.textContent='Not enough coins!';return;}
   coins-=SPIN_COST;saveCoins();updateCoinDisplay();
-  document.getElementById('shopCoins').textContent='🪙 '+coins;
+  document.getElementById('shopCoins').textContent='🪙 '+formatCoins(coins);
   spinRunning=true;
   spinResult.textContent='';
   spinDoBtn.disabled=true;
