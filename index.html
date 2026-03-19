@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 57;
+var CURRENT_VERSION = 58;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v57</div>
+<div id="versionBadge">v58</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -1129,9 +1129,11 @@ function lsSet(k,v){
 }
 function saveProgress(){
   if(typeof level==='undefined')return;
+  // Save CURRENT level (not highest) so player resumes where they left off
   var _hl=_save['highestLevel']||0;
   if(level>_hl){_save['highestLevel']=level;_hl=level;}
-  lsSet('savedLevel',_hl);
+  lsSet('highestLevel',_hl);
+  lsSet('savedLevel',level); // actual current level
   lsSet('savedScore',score);
   lsSet('savedDiff',difficulty);
   if(typeof lives!=='undefined')lsSet('savedLives',lives);
@@ -3897,9 +3899,9 @@ window.addEventListener('focus',()=>{if(musicOn&&_musicStarted)audio.play().catc
 window.addEventListener('pagehide',()=>{if(typeof level!=='undefined')saveProgress();writeSave(_save);});
 window.addEventListener('beforeunload',()=>{if(typeof level!=='undefined')saveProgress();writeSave(_save);});
 
-// ── Autosave every 2s — always, not just when running ──────────────────────
+// ── Autosave every 3s during gameplay ───────────────────────────────────────
 setInterval(()=>{
-  if(typeof level!=='undefined'){
+  if(typeof level!=='undefined'&&typeof running!=='undefined'&&running){
     saveProgress();
     writeSave(_save);
   }
