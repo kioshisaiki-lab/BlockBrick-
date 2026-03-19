@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 48;
+var CURRENT_VERSION = 49;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
@@ -690,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v48</div>
+<div id="versionBadge">v49</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -3805,19 +3805,47 @@ function playMusic(){
   audio.src=s;
   currentSongName=SONG_NAMES[s]||s;
   songTicker.textContent='♪ '+currentSongName;
-  audio.play().catch(()=>{});
+  audio.play().catch(function(){
+    // Autoplay blocked - wait for user touch then retry
+    _musicPending=true;
+  });
 }
+var _musicPending=false;
+var _musicStarted=false;
+
+// Start music on first user interaction (fixes autoplay block in WebView)
+function _tryStartMusic(){
+  if(!_musicStarted){
+    _musicStarted=true;
+    if(musicOn&&(audio.paused||_musicPending)){
+      _musicPending=false;
+      if(!audio.src||audio.src===''){
+        playMusic();
+      } else {
+        audio.play().catch(function(){playMusic();});
+      }
+    }
+  }
+}
+document.addEventListener('touchstart',_tryStartMusic,{once:false,passive:true});
+document.addEventListener('click',_tryStartMusic,{once:false,passive:true});
+
 audio.addEventListener('ended',()=>{if(musicOn)playMusic();});
+audio.addEventListener('error',()=>{
+  // Song failed to load (e.g. file not on GitHub yet) - skip to next
+  setTimeout(function(){if(musicOn)playMusic();},1000);
+});
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){
     audio.pause();
-    // save immediately when app goes to background (critical for WebView apps)
     if(typeof level!=='undefined')saveProgress();
     writeSave(_save);
-  }else{if(musicOn)audio.play().catch(()=>{});}
+  }else{
+    if(musicOn&&_musicStarted)audio.play().catch(()=>{});
+  }
 });
 window.addEventListener('blur',()=>{audio.pause();if(typeof level!=='undefined')saveProgress();writeSave(_save);});
-window.addEventListener('focus',()=>{if(musicOn)audio.play().catch(()=>{});});
+window.addEventListener('focus',()=>{if(musicOn&&_musicStarted)audio.play().catch(()=>{});});
 window.addEventListener('pagehide',()=>{if(typeof level!=='undefined')saveProgress();writeSave(_save);});
 window.addEventListener('beforeunload',()=>{if(typeof level!=='undefined')saveProgress();writeSave(_save);});
 
