@@ -2,68 +2,74 @@
 <html lang="en">
 <head>
 <script>
-// ── AUTO UPDATE ──────────────────────────────────────────────────────────────
-var CURRENT_VERSION = 36;
+// ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
+var CURRENT_VERSION = 38;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
-window.addEventListener('load', function(){
-  // Check for update after page fully loads
-  fetch(FB_AU + '/bb/autoupdate/meta.json', {cache:'no-store'})
-    .then(function(r){ return r.json(); })
-    .then(function(meta){
-      var sv = document.getElementById('settingsVersion');
-      var vb = document.getElementById('versionBadge');
-      if(!meta || !meta.version) {
-        if(sv) sv.textContent = 'v'+CURRENT_VERSION+' · no update info';
-        if(vb) vb.textContent = 'v'+CURRENT_VERSION;
-        return;
-      }
-      if(meta.version > CURRENT_VERSION){
-        // Update available
-        if(sv) sv.textContent = 'v'+CURRENT_VERSION+' → v'+meta.version+' updating...';
-        if(vb) vb.textContent = '⚡ UPDATING...';
-        doUpdate(meta);
-      } else {
-        if(sv) sv.textContent = 'v'+CURRENT_VERSION+' · ✅ up to date';
-        if(vb) vb.textContent = 'v'+CURRENT_VERSION+' ✅';
-      }
-    })
-    .catch(function(){
-      var vb = document.getElementById('versionBadge');
-      if(vb) vb.textContent = 'v'+CURRENT_VERSION;
-    });
-
-  // Show badge if just updated
+(function(){
+  // Check if we have a newer version stored in localStorage
   try {
-    if(sessionStorage.getItem('bb_just_updated')){
-      sessionStorage.removeItem('bb_just_updated');
-      var vb = document.getElementById('versionBadge');
-      if(vb){ vb.textContent = 'v'+CURRENT_VERSION+' ✅ UPDATED!'; vb.classList.add('updated'); }
-      var sv = document.getElementById('settingsVersion');
-      if(sv){ sv.textContent = 'v'+CURRENT_VERSION+' · ✅ just updated!'; sv.style.color='#00ff96'; }
+    var stored = localStorage.getItem('bb_app_html');
+    var storedVer = parseInt(localStorage.getItem('bb_app_version')||'0');
+    if(stored && storedVer > CURRENT_VERSION && stored.length > 5000){
+      // Newer version in localStorage - load it via data URI
+      try{
+        var encoded = 'data:text/html;charset=utf-8,' + encodeURIComponent(stored);
+        window.location.replace(encoded);
+      } catch(e){
+        document.open('text/html');
+        document.write(stored);
+        document.close();
+      }
+      return;
     }
   } catch(e){}
-});
+
+  // No stored update — check Firebase for new version after page loads
+  window.addEventListener('load', function(){
+    fetch(FB_AU+'/bb/autoupdate/meta.json',{cache:'no-store'})
+      .then(function(r){return r.json();})
+      .then(function(meta){
+        var vb=document.getElementById('versionBadge');
+        var sv=document.getElementById('settingsVersion');
+        if(!meta||!meta.version){
+          if(vb)vb.textContent='v'+CURRENT_VERSION;
+          if(sv)sv.textContent='v'+CURRENT_VERSION+' · no update info';
+          return;
+        }
+        if(meta.version > CURRENT_VERSION){
+          if(vb)vb.textContent='⚡ UPDATING...';
+          if(sv)sv.textContent='v'+CURRENT_VERSION+' → v'+meta.version+'...';
+          doUpdate(meta);
+        } else {
+          if(vb)vb.textContent='v'+CURRENT_VERSION+' ✅';
+          if(sv)sv.textContent='v'+CURRENT_VERSION+' · ✅ up to date';
+        }
+      }).catch(function(){
+        var vb=document.getElementById('versionBadge');
+        if(vb)vb.textContent='v'+CURRENT_VERSION;
+      });
+  });
+})();
 
 function doUpdate(meta){
-  var total = meta.chunks || 1;
-  var collected = new Array(total);
-  var loaded = 0;
+  var total=meta.chunks||1;
+  var collected=new Array(total);
+  var loaded=0;
 
-  // Show full-screen update overlay
-  var ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:#060010;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;touch-action:none;';
-  ov.innerHTML = '<div style="font-family:Orbitron,sans-serif;font-size:6vw;font-weight:900;color:#fff;text-shadow:0 0 20px #a03cff;">⚡ UPDATING</div>'
-    + '<div id="auMsg" style="font-family:Share Tech Mono,monospace;font-size:3.5vw;color:rgba(170,130,255,0.8);">Downloading...</div>'
-    + '<div style="width:70vw;height:2vw;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden;">'
-    + '<div id="auBar" style="height:100%;width:0%;background:linear-gradient(90deg,#a03cff,#00eaff);transition:width 0.3s;"></div></div>';
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:#060010;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;touch-action:none;';
+  ov.innerHTML='<div style="font-family:Orbitron,sans-serif;font-size:6vw;font-weight:900;color:#fff;text-shadow:0 0 20px #a03cff;">⚡ UPDATING</div>'
+    +'<div id="auMsg" style="font-family:Share Tech Mono,monospace;font-size:3.5vw;color:rgba(170,130,255,0.8);">Downloading...</div>'
+    +'<div style="width:70vw;height:2vw;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden;">'
+    +'<div id="auBar" style="height:100%;width:0%;background:linear-gradient(90deg,#a03cff,#00eaff);transition:width 0.3s;"></div></div>';
   document.body.appendChild(ov);
 
-  function setBar(p){ var b=document.getElementById('auBar'); if(b) b.style.width=p+'%'; }
-  function setMsg(m){ var s=document.getElementById('auMsg'); if(s) s.textContent=m; }
+  function setBar(p){var b=document.getElementById('auBar');if(b)b.style.width=p+'%';}
+  function setMsg(m){var s=document.getElementById('auMsg');if(s)s.textContent=m;}
 
-  var promises = [];
-  for(var i=0; i<total; i++){
+  var promises=[];
+  for(var i=0;i<total;i++){
     (function(idx){
       promises.push(
         fetch(FB_AU+'/bb/autoupdate/chunks/c'+idx+'.json',{cache:'no-store'})
@@ -79,20 +85,31 @@ function doUpdate(meta){
   }
 
   Promise.all(promises).then(function(){
-    setBar(95); setMsg('Installing...');
-    var newHtml = collected.join('');
-    if(!newHtml || newHtml.length < 5000){ ov.remove(); return; }
-    try{ sessionStorage.setItem('bb_just_updated','1'); }catch(e){}
-    setBar(100); setMsg('Done! Restarting...');
+    setBar(95);setMsg('Saving update...');
+    var newHtml=collected.join('');
+    if(!newHtml||newHtml.length<5000){ov.remove();return;}
+    // Save to localStorage so next restart loads new version
+    try{
+      localStorage.setItem('bb_app_html', newHtml);
+      localStorage.setItem('bb_app_version', String(meta.version));
+    }catch(e){}
+    setBar(100); setMsg('✅ Updated! Restarting...');
     setTimeout(function(){
-      // Use blob URL - most reliable in WebView
-      var blob = new Blob([newHtml], {type:'text/html'});
-      var url = URL.createObjectURL(blob);
-      window.location.href = url;
-    }, 800);
-  }).catch(function(e){
-    ov.remove();
-  });
+      try{
+        // Method 1: data URI (works in most WebViews)
+        var encoded = 'data:text/html;charset=utf-8,' + encodeURIComponent(newHtml);
+        window.location.replace(encoded);
+      } catch(e){
+        try{
+          // Method 2: document.write
+          document.open(); document.write(newHtml); document.close();
+        } catch(e2){
+          // Method 3: just reload, localStorage version will load
+          window.location.reload(true);
+        }
+      }
+    }, 1000);
+  }).catch(function(){ov.remove();});
 }
 </script>
 
@@ -673,7 +690,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v36</div>
+<div id="versionBadge">v38</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -1033,6 +1050,46 @@ let _save=loadSave();
   if(tl>hl)hl=tl;if(sl>hl)hl=sl;
   if(hl>0){_save['highestLevel']=hl;_save['savedLevel']=hl;}
 })();
+
+// ── Firebase Full Recovery ───────────────────────────────────────────────────
+// Runs after page loads - checks Firebase using known player ID
+window.addEventListener('load', function(){
+  var savedLvl=_save['savedLevel']||0;
+  if(savedLvl>1)return; // already has local data, skip
+
+  // Try with hardcoded known ID first, then saved ID
+  var FB_R='https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var pid=(typeof playerId!=='undefined'&&playerId)?playerId:(_save['playerId']||null);
+
+  function tryRestore(id){
+    if(!id)return;
+    fetch(FB_R+'/bb/players/'+id+'.json',{cache:'no-store'})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(!d||!d.level||d.level<2)return;
+        _save['savedLevel']=d.level;
+        _save['highestLevel']=d.level;
+        _save['totalLevels']=d.level;
+        _save['hs_hard']=d.score||0;
+        _save['hs_easy']=d.score||0;
+        _save['hs_medium']=d.score||0;
+        _save['totalTrophies']=d.trophies||0;
+        _save['playerName']=d.name||_save['playerName'];
+        _save['totalXP']=d.trophies?d.trophies*2000:0;
+        _save['savedLives']=3;
+        _save['coins']=_save['coins']||1000;
+        writeSave(_save);
+        showMilestone('✅ Account restored! Reloading...');
+        setTimeout(function(){window.location.reload();},1500);
+      }).catch(function(){});
+  }
+
+  // Try current playerId, wait a bit for it to initialize
+  setTimeout(function(){
+    var id=(typeof playerId!=='undefined'&&playerId)?playerId:(_save['playerId']||null);
+    tryRestore(id);
+  }, 2000);
+});
 function ls(k,def){
   const v=_save[k];
   return(v===undefined||v===null)?def:v;
