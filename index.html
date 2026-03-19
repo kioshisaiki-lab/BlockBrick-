@@ -1032,12 +1032,44 @@ function loadSave(){
   if(!raw)return {};
   try{return JSON.parse(raw);}catch(e){return {};}
 }
+// Restore from Firebase if local save is empty or missing key data
+function _restoreFromFirebase(){
+  var pid=_save['playerId']||null;
+  if(!pid)return;
+  var savedLvl=_save['savedLevel']||0;
+  var savedCoins=_save['coins']||0;
+  if(savedLvl>1&&savedCoins>0)return; // already have good local data
+  fetch(FB+'/bb/saves/'+pid+'.json',{cache:'no-store'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d||!d.savedLevel||d.savedLevel<2)return;
+      // Restore all saved data
+      Object.keys(d).forEach(function(k){_save[k]=d[k];});
+      writeSave(_save);
+      setTimeout(function(){window.location.reload();},500);
+    }).catch(function(){});
+}
 
 function writeSave(obj){
   const raw=JSON.stringify(obj);
   setCookie(raw);
   try{localStorage.setItem(SAVE_KEY,raw);}catch(e){}
   try{sessionStorage.setItem(SAVE_KEY,raw);}catch(e){}
+  // Also backup full save to Firebase so it survives reinstalls/updates
+  _writeSaveToFirebase(obj);
+}
+var _fbSaveTimer=null;
+function _writeSaveToFirebase(obj){
+  if(_fbSaveTimer)clearTimeout(_fbSaveTimer);
+  _fbSaveTimer=setTimeout(function(){
+    var pid=obj['playerId']||null;
+    if(!pid||typeof FB==='undefined')return;
+    fetch(FB+'/bb/saves/'+pid+'.json',{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(obj)
+    }).catch(function(){});
+  },3000); // debounce - only write after 3s of no changes
 }
 
 let _save=loadSave();
@@ -1048,8 +1080,9 @@ let _save=loadSave();
 })();
 
 // ── Firebase Full Recovery ───────────────────────────────────────────────────
-// Runs after page loads - checks Firebase using known player ID
+// Runs after page loads - restores full save from Firebase if local is empty
 window.addEventListener('load', function(){
+  setTimeout(_restoreFromFirebase, 2000);
   var savedLvl=_save['savedLevel']||0;
   if(savedLvl>1)return; // already has local data, skip
 
@@ -5044,6 +5077,12 @@ async function registerPlayer(){
 }
 // Register on load and after each game
 setTimeout(registerPlayer,3000);
+// Backup full save to Firebase on load
+setTimeout(function(){
+  if(_save&&Object.keys(_save).length>2){
+    _writeSaveToFirebase(_save);
+  }
+},5000);
 
 document.getElementById('challengeClose').addEventListener('click',function(){
   document.getElementById('challengePopup').classList.remove('show');
@@ -7679,7 +7718,7 @@ function startSpectate(k){
 function stopSpectate(){if(_spI){clearInterval(_spI);_spI=null;}var v=document.getElementById('spectateView');if(v)v.style.display='none';}
 
 // ── Trash Talk ──────────────────────────────────────────────────────────────
-var TTM=['💀 GG easy lol','😂 You call that a score?','🔥 I was asleep and still beat you','👑 Bow to the brick god','😤 My lola plays better','🤣 Is that your best? Cute.','😈 Too slow, try harder','🧱 I broke more bricks by accident','💅 Already 3 levels ahead','😎 Blink and you missed me'];
+var TTM=[' mama mo blue',' tuli kana ba?',' laos ka naman e',' pabigat kalang',' amoy putok ah',' galingan mo naman! boii.',' dika mahal ng pamilya mo',' matulog ka nalang',' di mo ako kaya',' yuck friendzone'];
 function buildTrashTalkUI(){
   var pk=document.getElementById('trashFriendPicker'),ne=document.getElementById('trashSelectedName'),inp=document.getElementById('trashTalkTarget');
   if(pk){pk.innerHTML='';var fl=(typeof friends!=='undefined'&&friends.length)?friends:[];
