@@ -3,8 +3,9 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 66;
+var CURRENT_VERSION = 67;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
+var FB = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app'; // declared early for save system
 
 (function(){
   // Check if we have a newer version stored in localStorage
@@ -114,9 +115,10 @@ function doUpdate(meta){
 </script>
 
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<meta http-equiv="cache-control" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, interactive-widget=resizes-visual">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -690,7 +692,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v66</div>
+<div id="versionBadge">v67</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
