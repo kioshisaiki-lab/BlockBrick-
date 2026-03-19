@@ -3,7 +3,7 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 67;
+var CURRENT_VERSION = 68;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 var FB = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app'; // declared early for save system
 
@@ -314,8 +314,8 @@ function doUpdate(meta){
   #pu-magnet.active,#pu-laser.active{display:flex;}
 
   /* ── Name Modal ── */
-  #nameModal{position:fixed;inset:0;background:rgba(6,0,16,0.97);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4vw;padding:8vw;-webkit-overflow-scrolling:touch;touch-action:manipulation;}
-  #nameModal.hidden{display:none!important;pointer-events:none!important;}
+  #nameModal{position:fixed;inset:0;background:#060010;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4vw;padding:8vw;-webkit-overflow-scrolling:touch;touch-action:manipulation;}
+  #nameModal.hidden{display:none!important;pointer-events:none!important;visibility:hidden!important;}
   #nameModal h2{font-family:'Orbitron',sans-serif;font-size:7vw;font-weight:900;color:#fff;letter-spacing:0.12em;text-shadow:0 0 30px #a03cff,0 0 60px #a03cff;text-align:center;}
   #nameModal p{font-family:'Share Tech Mono',monospace;font-size:3vw;color:rgba(170,130,255,0.7);letter-spacing:0.1em;text-align:center;line-height:1.9;}
   #playerNameInput{font-family:'Orbitron',sans-serif;font-size:4.5vw;font-weight:700;letter-spacing:0.1em;width:88vw;padding:3vw 4vw;background:rgba(160,60,255,0.1);color:#fff;border:0.5vw solid rgba(160,60,255,0.7);border-radius:2vw;outline:none;text-align:center;caret-color:#a03cff;box-shadow:0 0 20px rgba(160,60,255,0.1);}
@@ -692,7 +692,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v67</div>
+<div id="versionBadge">v68</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -4513,12 +4513,32 @@ if(playerNameInput){
   playerNameInput.addEventListener('keydown',function(e){if(e.key==='Enter')confirmName();});
 }
 if(!playerName){
-  setTimeout(function(){
-    if(nameModal){
-      nameModal.classList.remove('hidden');
-      nameModal.style.display='flex';
-    }
-  }, 300);
+  // Try restoring name from Firebase first before showing modal
+  var _pid=_save['playerId']||null;
+  if(_pid){
+    setTimeout(function(){
+      fetch(FB+'/bb/saves/'+_pid+'.json',{cache:'no-store'})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(d&&d.playerName){
+            playerName=d.playerName;
+            lsSet('playerName',playerName);
+            // Restore all save data
+            Object.keys(d).forEach(function(k){_save[k]=d[k];});
+            writeSave(_save);
+            window.location.reload();
+          } else {
+            if(nameModal){nameModal.classList.remove('hidden');nameModal.style.display='flex';}
+          }
+        }).catch(function(){
+          if(nameModal){nameModal.classList.remove('hidden');nameModal.style.display='flex';}
+        });
+    },500);
+  } else {
+    setTimeout(function(){
+      if(nameModal){nameModal.classList.remove('hidden');nameModal.style.display='flex';}
+    },300);
+  }
 }
 
 // ── Change name (in settings) ─────────────────────────────────────────────────
