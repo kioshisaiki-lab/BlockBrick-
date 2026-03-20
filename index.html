@@ -3,8 +3,9 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 61;
+var CURRENT_VERSION = 72;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
+var FB = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
   // Check if we have a newer version stored in localStorage
@@ -690,7 +691,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v61</div>
+<div id="versionBadge">v72</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -3368,6 +3369,11 @@ function update(ts){
     // Do NOT reset lives here — lives persist across levels so players keep what they earned/bought
     saveProgress();
     writeSave(_save); // force-flush immediately so closing app right now still saves
+    // Push level to Firebase immediately so crash/quit won't lose progress
+    if(typeof playerId!=='undefined'&&playerId&&typeof FB!=='undefined'){
+      fetch(FB+'/bb/players/'+playerId+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({level:level,id:playerId})}).catch(function(){});
+      fetch(FB+'/bb/saves/'+playerId+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({savedLevel:level,highestLevel:_save['highestLevel']||level,savedScore:score})}).catch(function(){});
+    }
     // Also push to Firebase immediately so crash won't lose progress
     if(typeof playerId!=='undefined'&&playerId){
       var _lvlSave={savedLevel:level,highestLevel:_save['highestLevel']||level,totalLevels:totalLevels||level};
@@ -3729,9 +3735,10 @@ function doStartGame(){
     b.classList.toggle('selected',b.dataset.diff===difficulty);
   });
   // Load saved level (where player actually was), not highest ever
-  var _bl=saved||_save['savedLevel']||0;
+  // Load actual saved level (not highest ever)
+  var _bl=_save['savedLevel']||0;
   var _hl=_save['highestLevel']||0;
-  if(_bl<1)_bl=_hl; // fallback to highest if no saved level
+  if(_bl<1)_bl=_hl||1;
   if(_bl>0){score=savedScore;level=_bl;lives=ls('savedLives',3);if(lives<=0)lives=3;}
   else{score=0;level=1;lives=3;}
   earnedTrophies=new Set();
@@ -3902,19 +3909,28 @@ audio.addEventListener('stalled',function(){
 audio.addEventListener('abort',function(){
   _musicLocked=false;
 });
+function _emergencySave(){
+  if(typeof level==='undefined')return;
+  saveProgress();
+  writeSave(_save);
+  // Also push to Firebase immediately
+  if(typeof playerId!=='undefined'&&playerId&&typeof FB!=='undefined'){
+    var _s={savedLevel:level,highestLevel:_save['highestLevel']||level,savedScore:score,savedLives:typeof lives!=='undefined'?lives:3};
+    fetch(FB+'/bb/saves/'+playerId+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(_s)}).catch(function(){});
+  }
+}
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){
     audio.pause();
-    if(typeof level!=='undefined')saveProgress();
-    writeSave(_save);
+    _emergencySave();
   }else{
     if(musicOn&&_musicStarted)audio.play().catch(()=>{});
   }
 });
-window.addEventListener('blur',()=>{audio.pause();if(typeof level!=='undefined')saveProgress();writeSave(_save);});
+window.addEventListener('blur',()=>{audio.pause();_emergencySave();});
 window.addEventListener('focus',()=>{if(musicOn&&_musicStarted)audio.play().catch(()=>{});});
-window.addEventListener('pagehide',()=>{if(typeof level!=='undefined')saveProgress();writeSave(_save);});
-window.addEventListener('beforeunload',()=>{if(typeof level!=='undefined')saveProgress();writeSave(_save);});
+window.addEventListener('pagehide',()=>{_emergencySave();});
+window.addEventListener('beforeunload',()=>{_emergencySave();});
 
 // ── Autosave every 3s during gameplay ───────────────────────────────────────
 setInterval(()=>{
