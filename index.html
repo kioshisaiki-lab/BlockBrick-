@@ -3,8 +3,9 @@
 <head>
 <script>
 // ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 61;
+var CURRENT_VERSION = 74;
 var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
+var FB = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 (function(){
   // Check if we have a newer version stored in localStorage
@@ -690,7 +691,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v61</div>
+<div id="versionBadge">v74</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -1069,12 +1070,10 @@ function _writeSaveToFirebase(obj){
   _fbSaveTimer=setTimeout(function(){
     var pid=obj['playerId']||null;
     if(!pid||typeof FB==='undefined')return;
-    fetch(FB+'/bb/saves/'+pid+'.json',{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(obj)
-    }).catch(function(){});
-  },3000); // debounce - only write after 3s of no changes
+    fetch(FB+'/bb/saves/'+pid+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)}).catch(function(){});
+    var pname=(obj['playerName']||'').trim().toLowerCase().replace(/\s+/g,'_');
+    if(pname) fetch(FB+'/bb/savesByName/'+pname+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)}).catch(function(){});
+  },3000);
 }
 
 let _save=loadSave();
@@ -3368,6 +3367,11 @@ function update(ts){
     // Do NOT reset lives here — lives persist across levels so players keep what they earned/bought
     saveProgress();
     writeSave(_save); // force-flush immediately so closing app right now still saves
+    // Push to Firebase immediately on level complete
+    if(typeof playerId!=='undefined'&&playerId&&typeof FB!=='undefined'){
+      fetch(FB+'/bb/players/'+playerId+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({level:level,id:playerId})}).catch(function(){});
+      fetch(FB+'/bb/saves/'+playerId+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({savedLevel:level,highestLevel:_save['highestLevel']||level,savedScore:score})}).catch(function(){});
+    }
     // Also push to Firebase immediately so crash won't lose progress
     if(typeof playerId!=='undefined'&&playerId){
       var _lvlSave={savedLevel:level,highestLevel:_save['highestLevel']||level,totalLevels:totalLevels||level};
@@ -3902,16 +3906,16 @@ audio.addEventListener('stalled',function(){
 audio.addEventListener('abort',function(){
   _musicLocked=false;
 });
-document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){
-    audio.pause();
-    if(typeof level!=='undefined')saveProgress();
-    writeSave(_save);
-  }else{
-    if(musicOn&&_musicStarted)audio.play().catch(()=>{});
+function _emergencySave(){
+  if(typeof level==='undefined')return;
+  saveProgress();writeSave(_save);
+  if(typeof playerId!=='undefined'&&playerId&&typeof FB!=='undefined'){
+    var _s={savedLevel:level,highestLevel:_save['highestLevel']||level,savedScore:score};
+    fetch(FB+'/bb/saves/'+playerId+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(_s)}).catch(function(){});
   }
-});
-window.addEventListener('blur',()=>{audio.pause();if(typeof level!=='undefined')saveProgress();writeSave(_save);});
+}
+document.addEventListener('visibilitychange',function(){if(document.hidden){audio.pause();_emergencySave();}else{if(musicOn&&_musicStarted)audio.play().catch(()=>{});}});
+window.addEventListener('blur',()=>{audio.pause();_emergencySave();});
 window.addEventListener('focus',()=>{if(musicOn&&_musicStarted)audio.play().catch(()=>{});});
 window.addEventListener('pagehide',()=>{if(typeof level!=='undefined')saveProgress();writeSave(_save);});
 window.addEventListener('beforeunload',()=>{if(typeof level!=='undefined')saveProgress();writeSave(_save);});
@@ -4305,6 +4309,21 @@ function confirmName(){
   lsSet('playerName',playerName);
   if(nameModal)nameModal.classList.add('hidden');
   registerPlayer&&registerPlayer();
+  // Try restore by name (works even with new device/ID)
+  var _fb='https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var safeName=n.trim().toLowerCase().replace(/\s+/g,'_');
+  fetch(_fb+'/bb/savesByName/'+safeName+'.json',{cache:'no-store'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d&&d.savedLevel>1){
+        var pid=playerId;
+        Object.keys(d).forEach(function(k){_save[k]=d[k];});
+        _save['playerName']=n;_save['playerId']=pid;
+        writeSave(_save);
+        showMilestone('✅ Account restored! Level '+d.savedLevel);
+        setTimeout(function(){window.location.reload();},1500);
+      }
+    }).catch(function(){});
 }
 function confirmNamePrompt(){
   var n=(window.prompt('Enter your player name (max 16 chars):','')||'').trim().replace(/[<>&"']/g,'').slice(0,16);
@@ -4818,6 +4837,15 @@ function genPlayerId(){
 }
 var playerId=ls('playerId',null);
 if(!playerId){playerId=genPlayerId();lsSet('playerId',playerId);}
+(function(){
+  if(ls('playerName',null))return;
+  var pid=ls('playerId',null);if(!pid)return;
+  var _fb='https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
+  fetch(_fb+'/bb/saves/'+pid+'.json',{cache:'no-store'})
+    .then(function(r){return r.json();})
+    .then(function(d){if(d&&d.playerName){Object.keys(d).forEach(function(k){_save[k]=d[k];});writeSave(_save);setTimeout(function(){window.location.reload();},300);}})
+    .catch(function(){});
+})();
 
 var friends=ls('friends',[]); // [{id,name,score,diff}]
 
