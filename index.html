@@ -2699,7 +2699,7 @@ function updateBallDrops(){
     p.y+=p.vy*frameScale;p.pulse+=0.15*frameScale;
     if(hit(p.x-p.size/2,p.y-p.size/2,p.size,p.size,paddle.x,paddle.y,paddle.w,PH)){
       var d2=DIFF[difficulty];
-      var spd2=Math.min(d2.speedMax,d2.speedBase+Math.sqrt(level)*0.28);
+      var spd2=Math.min(d2.speedMax,d2.speedBase+Math.sqrt(level)*0.45);
       for(var i=0;i<p.mult-1;i++){
         var ang=(Math.random()*Math.PI*0.7)-Math.PI*0.35;
         balls.push({x:paddle.x+paddle.w/2,y:paddle.y-BS*2,vx:Math.sin(ang)*spd2*SX,vy:-Math.cos(ang)*spd2*SY,fire:false});
@@ -2764,9 +2764,9 @@ function drawBallDrops(){
 
 // ── Difficulty ────────────────────────────────────────────────────────────────
 const DIFF={
-  easy:  {speedBase:5.0,speedMax:8.0,  scoreBonus:1,  label:'EASY',  color:'#00ff96'},
-  medium:{speedBase:6.8,speedMax:11.0, scoreBonus:1.5,label:'MEDIUM',color:'#ffc800'},
-  hard:  {speedBase:9.0,speedMax:14.5, scoreBonus:2,  label:'HARD',  color:'#ff3c3c'}
+  easy:  {speedBase:5.0,speedMax:10.0, scoreBonus:1,  label:'EASY',  color:'#00ff96'},
+  medium:{speedBase:6.8,speedMax:14.0, scoreBonus:1.5,label:'MEDIUM',color:'#ffc800'},
+  hard:  {speedBase:9.0,speedMax:18.0, scoreBonus:2,  label:'HARD',  color:'#ff3c3c'}
 };
 let difficulty='easy';
 document.querySelectorAll('.diff-btn').forEach(btn=>{
@@ -3039,7 +3039,7 @@ function resetLevel(){
   });
   balls=[];powerDrops=[];particles=[];brickFlashes=[];ballDrops=[];paddleDrops=[];laserBolts=[];combo=0;
   perfectLevel=true;levelStartTime=performance.now();
-  const spd=Math.min(d.speedMax,d.speedBase+Math.sqrt(level)*0.28);
+  const spd=Math.min(d.speedMax,d.speedBase+Math.sqrt(level)*0.45);
   balls.push({x:540*SX,y:960*SY,vx:spd*SX,vy:-spd*SY,fire:false});
   bricks=[];
 
@@ -3315,7 +3315,7 @@ function update(ts){
               spawnPaddleDrop(br.x+br.w/2,br.y);
             }
             if(br.type==='dup'){
-              const spd=Math.min(d.speedMax,d.speedBase+Math.sqrt(level)*0.28);
+              const spd=Math.min(d.speedMax,d.speedBase+Math.sqrt(level)*0.45);
               add.push({x:b.x,y:b.y,vx:-spd*SX,vy:-spd*SY,fire:false});
               add.push({x:b.x,y:b.y,vx:spd*SX,vy:-spd*SY,fire:false});
             }
@@ -3347,7 +3347,7 @@ function update(ts){
     if(lives<=0){endGame();return;}
     saveProgress();
     shake(14);doLevelFlash('rgba(255,0,0,0.4)');
-    const spd=Math.min(DIFF[difficulty].speedMax,DIFF[difficulty].speedBase+Math.sqrt(level)*0.28);
+    const spd=Math.min(DIFF[difficulty].speedMax,DIFF[difficulty].speedBase+Math.sqrt(level)*0.45);
     balls.push({x:W/2,y:H/2,vx:spd*SX,vy:-spd*SY,fire:false});
   }
 
@@ -3760,7 +3760,7 @@ document.getElementById('reviveYesBtn').addEventListener('click',()=>{
   lives=1;
   lsSet('savedLives',lives); // persist revived life
   const d=DIFF[difficulty];
-  const spd=Math.min(d.speedMax,d.speedBase+level*0.07);
+  const spd=Math.min(d.speedMax,d.speedBase+level*0.12);
   balls=[{x:W/2,y:H/2,vx:spd*SX,vy:-spd*SY,fire:false}];
   running=true;
   if(rafId)cancelAnimationFrame(rafId);
