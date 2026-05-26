@@ -3293,7 +3293,7 @@ function resetLevel(){
 
 function initGame(){
   var _sp=saveProgress;saveProgress=function(){};
-  score=0;
+  score=getHS(difficulty)||0;
   level=Math.max(_save['savedLevel']||1,_save['highestLevel']||1);
   lives=_save['savedLives']||3;if(lives<=0)lives=3;
   earnedTrophies=new Set();
@@ -3816,9 +3816,12 @@ function doStartGame(){
   document.querySelectorAll('.diff-btn').forEach(b=>{
     b.classList.toggle('selected',b.dataset.diff===difficulty);
   });
+  // Score always starts from the current high score for the selected difficulty
+  // so the player's best score is never lost — it just keeps going up from there
+  const _startScore=getHS(difficulty)||0;
   var _bl=Math.max(saved||0,_save['highestLevel']||0);
-  if(_bl>0){score=savedScore;level=_bl;lives=ls('savedLives',3);if(lives<=0)lives=3;}
-  else{score=0;level=1;lives=3;}
+  if(_bl>0){score=Math.max(_startScore,savedScore);level=_bl;lives=ls('savedLives',3);if(lives<=0)lives=3;}
+  else{score=_startScore;level=1;lives=3;}
   earnedTrophies=new Set();
   resetLevel();
   goScore.style.display='none';starsDisplay.style.display='none';
