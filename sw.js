@@ -1,5 +1,5 @@
 // Block Brick Service Worker v65
-const CACHE_NAME = 'blockbrick-v68';
+const CACHE_NAME = 'blockbrick-v60';
 
 const CORE_FILES = [
   './index.html',
