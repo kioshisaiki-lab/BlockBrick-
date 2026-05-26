@@ -1,5 +1,5 @@
 // Block Brick Service Worker — offline support with progress reporting
-const CACHE_NAME = 'blockbrick-v53';
+const CACHE_NAME = 'blockbrick-v54';
 
 const ALL_FILES = [
   './index.html',
