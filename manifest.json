@@ -1,12 +1,15 @@
 {
-  "name": "Block Brick",
+  "name": "Block Brick - Breakdown Edition",
   "short_name": "Block Brick",
-  "description": "Block Brick - the arcade brick breaker game",
+  "description": "Block Brick Breakdown Edition - the arcade brick breaker game with global leaderboards",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "fullscreen",
   "orientation": "portrait",
   "background_color": "#060010",
   "theme_color": "#060010",
+  "lang": "en",
+  "categories": ["games", "entertainment"],
   "icons": [
     {
       "src": "icon-192.png",
@@ -20,5 +23,7 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "screenshots": [],
+  "shortcuts": []
 }
