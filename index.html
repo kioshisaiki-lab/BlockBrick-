@@ -38,15 +38,18 @@ window.addEventListener('load', function(){
         text.textContent = '📦 Caching for offline... 0 / ' + e.data.total;
         bar.style.width = '0%';
       } else if (e.data.type === 'CACHE_PROGRESS') {
-        var pct = Math.round((e.data.done / e.data.total) * 100);
-        text.textContent = '📦 Caching for offline... ' + e.data.done + ' / ' + e.data.total;
-        bar.style.width = pct + '%';
-        if (!toast.classList.contains('show')) toast.classList.add('show');
+        if (e.data.done < e.data.total) {
+          var pct = Math.round((e.data.done / e.data.total) * 100);
+          text.textContent = '📦 Caching for offline... ' + e.data.done + ' / ' + e.data.total;
+          bar.style.width = pct + '%';
+          if (!toast.classList.contains('show')) toast.classList.add('show');
+        }
       } else if (e.data.type === 'CACHE_DONE') {
-        toast.classList.add('show');
-        text.textContent = '✅ Ready to play offline!';
-        bar.style.width = '100%';
-        setTimeout(function() { toast.classList.remove('show'); }, 3000);
+        if (toast.classList.contains('show')) {
+          text.textContent = '\u2705 Ready to play offline!';
+          bar.style.width = '100%';
+          setTimeout(function() { toast.classList.remove('show'); }, 3000);
+        }
       }
     });
 
