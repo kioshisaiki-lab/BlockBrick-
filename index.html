@@ -5762,10 +5762,11 @@ async function fetchMessages(friendId){
 
 async function sendMessage(text){
   if(!text.trim()||!currentChatFriendId)return;
+  var _isMedia=text.startsWith('__PHOTO__:')||text.startsWith('__VOICE__:');
   const msg={
     sender:playerId,
     name:playerName||'ME',
-    text:text.trim().slice(0,200),
+    text:_isMedia?text.trim():text.trim().slice(0,200),
     ts:Date.now()
   };
   if(replyToMsg){
