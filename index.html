@@ -1042,7 +1042,9 @@ function saveProgress(){
   var _hl=_save['highestLevel']||0;
   if(level>_hl){_save['highestLevel']=level;_hl=level;}
   lsSet('savedLevel',_hl);
-  lsSet('savedScore',score);
+  // Always keep the highest score ever achieved so CONTINUE always starts from the best score
+  var _prevScore=ls('savedScore',0)||0;
+  if(score>_prevScore)lsSet('savedScore',score);
   lsSet('savedDiff',difficulty);
   if(typeof lives!=='undefined')lsSet('savedLives',lives);
 }
@@ -3443,8 +3445,10 @@ function showGameOver(){
   // Final game over — show overlay
   audio.pause();
   inGameControls.style.display='none';
-  // Keep savedLevel so player can always resume — only reset score for next attempt
-  lsSet('savedScore',0);
+  // Keep savedLevel so player can always resume
+  // Keep the highest score ever achieved so CONTINUE always starts from the best score
+  var prevBest=ls('savedScore',0)||0;
+  if(score>prevBest)lsSet('savedScore',score);
   const d=DIFF[difficulty];
   const hs=getHS(difficulty);if(score>hs)setHS(difficulty,score);
   updateHSDisplay();updateRankDisplay();
