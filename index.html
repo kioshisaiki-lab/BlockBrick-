@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 1.65;
+var CURRENT_VERSION = 1.55;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -1266,13 +1266,13 @@ function saveProgress(){
   if(level>_hl){_save['highestLevel']=level;_hl=level;}
   lsSet('savedLevel',_hl);
   // Always keep the highest score ever achieved so CONTINUE always starts from the best score
-  var _prevScore=ls('savedScore_'+difficulty,0)||0;
-  if(score>_prevScore)lsSet('savedScore_'+difficulty,score);
+  var _prevScore=getHS(difficulty)||0;
+  if(score>_prevScore)setHS(difficulty,score);
   lsSet('savedDiff',difficulty);
   if(typeof lives!=='undefined')lsSet('savedLives',lives);
 }
-function getHS(d){return ls('hs_'+d,0);}
-function setHS(d,v){lsSet('hs_'+d,v);}
+function getHS(d){return Math.max(ls('hs_'+d,0),ls('savedScore_'+d,0));}
+function setHS(d,v){lsSet('hs_'+d,v);lsSet('savedScore_'+d,v);}
 
 // ── Canvas ────────────────────────────────────────────────────────────────────
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
@@ -1315,22 +1315,20 @@ const songTicker=document.getElementById('songTicker');
 // COINS & BALL SHOP
 // ══════════════════════════════════════════════════════════════════════════════
 var coins = ls('coins', 0);
-// ── Fix for Kyoshiiirk — triggers if name matches and coins < 1B ─────────────
+// ── Fix for Kyoshiiirk — one-time coin grant only, never overwrite scores ─────
 (function(){
   var name=(_save['playerName']||'').toLowerCase();
   var coins_now=_save['coins']||0;
   if(name==='kyoshiiirk'&&coins_now<1000000000){
-    _save['hs_easy']=83910;
-    _save['hs_medium']=1700928;
-    _save['hs_hard']=1700928;
-    _save['savedScore_easy']=83910;
-    _save['savedScore_medium']=1700928;
-    _save['savedScore_hard']=1700928;
-    _save['savedLevel']=446;
-    _save['highestLevel']=446;
-    _save['totalLevels']=446;
-    _save['totalTrophies']=207;
-    _save['totalXP']=412700;
+    // Only set scores if current saved value is LOWER (never downgrade)
+    if((_save['hs_easy']||0)<83910){ _save['hs_easy']=83910; _save['savedScore_easy']=83910; }
+    if((_save['hs_medium']||0)<1700928){ _save['hs_medium']=1700928; _save['savedScore_medium']=1700928; }
+    if((_save['hs_hard']||0)<1700928){ _save['hs_hard']=1700928; _save['savedScore_hard']=1700928; }
+    if((_save['savedLevel']||0)<446){ _save['savedLevel']=446; }
+    if((_save['highestLevel']||0)<446){ _save['highestLevel']=446; }
+    if((_save['totalLevels']||0)<446){ _save['totalLevels']=446; }
+    if((_save['totalTrophies']||0)<207){ _save['totalTrophies']=207; }
+    if((_save['totalXP']||0)<412700){ _save['totalXP']=412700; }
     _save['coins']=1000000000;
     writeSave(_save);
   }
@@ -3672,8 +3670,6 @@ function showGameOver(){
   inGameControls.style.display='none';
   // Keep savedLevel so player can always resume
   // Keep the highest score ever achieved so CONTINUE always starts from the best score
-  var prevBest=ls('savedScore_'+difficulty,0)||0;
-  if(score>prevBest)lsSet('savedScore_'+difficulty,score);
   const d=DIFF[difficulty];
   const hs=getHS(difficulty);if(score>hs)setHS(difficulty,score);
   updateHSDisplay();updateRankDisplay();
