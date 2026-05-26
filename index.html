@@ -3813,8 +3813,11 @@ function _tryStartMusic(){}
 
 audio.addEventListener('ended',()=>{if(musicOn)playMusic();});
 audio.addEventListener('error',()=>{
-  // Song failed to load (e.g. file not on GitHub yet) - skip to next
-  setTimeout(function(){if(musicOn)playMusic();},1000);
+  var err = audio.error ? audio.error.message : 'unknown';
+  console.error('Audio error:', err, 'src:', audio.src);
+  // Show error briefly in song ticker for debugging
+  if(typeof songTicker !== 'undefined') songTicker.textContent = '⚠️ Audio err: ' + err;
+  setTimeout(function(){if(musicOn)playMusic();},2000);
 });
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){
