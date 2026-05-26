@@ -1,5 +1,5 @@
 // Block Brick Service Worker — offline support with progress reporting
-const CACHE_NAME = 'blockbrick-v63';
+const CACHE_NAME = 'blockbrick-v64';
 
 // Core files only — cached on install (fast)
 const CORE_FILES = [
@@ -78,9 +78,9 @@ async function cacheMp3sInBackground() {
         broadcast({ type: 'CACHE_PROGRESS', done: cacheProgress.done, total: cacheProgress.total });
         continue;
       }
-      var req = new Request(MP3_FILES[i], { cache: 'no-cache' });
-      var resp = await fetch(req);
-      await cache.put(req, resp);
+      // Fetch and store with plain URL as key (so playback cache.match finds it)
+      var resp = await fetch(MP3_FILES[i]);
+      await cache.put(MP3_FILES[i], resp);
     } catch(err) {}
     cacheProgress.done++;
     broadcast({ type: 'CACHE_PROGRESS', done: cacheProgress.done, total: cacheProgress.total });
