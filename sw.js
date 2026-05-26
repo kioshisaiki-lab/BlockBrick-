@@ -1,5 +1,5 @@
 // Block Brick Service Worker — offline support with progress reporting
-const CACHE_NAME = 'blockbrick-v53';
+const CACHE_NAME = 'blockbrick-v55';
 
 const ALL_FILES = [
   './index.html',
@@ -21,9 +21,10 @@ const ALL_FILES = [
   './ngayon_at_kailanman.mp3'
 ];
 
-// Broadcast progress to all open clients
+var cacheProgress = { done: 0, total: ALL_FILES.length, finished: false };
+
 function broadcast(msg) {
-  self.clients.matchAll().then(function(clients) {
+  self.clients.matchAll({ includeUncontrolled: true }).then(function(clients) {
     clients.forEach(function(c) { c.postMessage(msg); });
   });
 }
@@ -32,27 +33,21 @@ self.addEventListener('install', function(e) {
   self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then(async function(cache) {
-      var total = ALL_FILES.length;
-      var done = 0;
-
-      broadcast({ type: 'CACHE_START', total: total });
+      cacheProgress = { done: 0, total: ALL_FILES.length, finished: false };
+      broadcast({ type: 'CACHE_START', total: ALL_FILES.length });
 
       for (var i = 0; i < ALL_FILES.length; i++) {
-        try {
-          await cache.add(ALL_FILES[i]);
-        } catch(err) {
-          console.log('Failed to cache: ' + ALL_FILES[i]);
-        }
-        done++;
-        broadcast({ type: 'CACHE_PROGRESS', done: done, total: total });
+        try { await cache.add(ALL_FILES[i]); } catch(e) {}
+        cacheProgress.done++;
+        broadcast({ type: 'CACHE_PROGRESS', done: cacheProgress.done, total: cacheProgress.total });
       }
 
+      cacheProgress.finished = true;
       broadcast({ type: 'CACHE_DONE' });
     })
   );
 });
 
-// Activate — delete old caches
 self.addEventListener('activate', function(e) {
   e.waitUntil(
     caches.keys().then(function(keys) {
@@ -60,13 +55,21 @@ self.addEventListener('activate', function(e) {
         keys.filter(function(k) { return k !== CACHE_NAME; })
             .map(function(k) { return caches.delete(k); })
       );
-    }).then(function() {
-      return self.clients.claim();
-    })
+    }).then(function() { return self.clients.claim(); })
   );
 });
 
-// Fetch — network first, fall back to cache
+// Page can ask for current progress on load
+self.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'GET_CACHE_STATUS') {
+    e.source.postMessage({
+      type: cacheProgress.finished ? 'CACHE_DONE' : 'CACHE_PROGRESS',
+      done: cacheProgress.done,
+      total: cacheProgress.total
+    });
+  }
+});
+
 self.addEventListener('fetch', function(e) {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
@@ -75,9 +78,7 @@ self.addEventListener('fetch', function(e) {
   e.respondWith(
     fetch(e.request).then(function(response) {
       var clone = response.clone();
-      caches.open(CACHE_NAME).then(function(cache) {
-        cache.put(e.request, clone);
-      });
+      caches.open(CACHE_NAME).then(function(cache) { cache.put(e.request, clone); });
       return response;
     }).catch(function() {
       return caches.match(e.request).then(function(cached) {

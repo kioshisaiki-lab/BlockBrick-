@@ -41,12 +41,21 @@ window.addEventListener('load', function(){
         var pct = Math.round((e.data.done / e.data.total) * 100);
         text.textContent = '📦 Caching for offline... ' + e.data.done + ' / ' + e.data.total;
         bar.style.width = pct + '%';
+        if (!toast.classList.contains('show')) toast.classList.add('show');
       } else if (e.data.type === 'CACHE_DONE') {
+        toast.classList.add('show');
         text.textContent = '✅ Ready to play offline!';
         bar.style.width = '100%';
         setTimeout(function() { toast.classList.remove('show'); }, 3000);
       }
     });
+
+    // Ask SW for current cache status (in case SW installed before page was ready)
+    setTimeout(function() {
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'GET_CACHE_STATUS' });
+      }
+    }, 1000);
   }
 });
 </script>
