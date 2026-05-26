@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 61;
+var CURRENT_VERSION = 62;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -50,7 +50,17 @@ window.addEventListener('load', function(){
         setTimeout(function() { toast.classList.remove('show'); }, 3000);
       }
     });
-    // No GET_CACHE_STATUS poll on load
+    // Trigger background mp3 caching once SW is in control
+    function startBgCache() {
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'START_BG_CACHE' });
+      }
+    }
+    if (navigator.serviceWorker.controller) {
+      startBgCache();
+    } else {
+      navigator.serviceWorker.addEventListener('controllerchange', startBgCache, { once: true });
+    }
   }
 });
 </script>
@@ -3947,17 +3957,17 @@ function playMusic(){
   audio.onerror=null;
 
   if(navigator.onLine){
-    // Stream from GitHub
-    audio.src=GITHUB_BASE+s;
+    // Stream from GitHub (SW will cache it automatically)
+    audio.src=GITHUB_BASE+s.replace('./','');
     audio.onerror=function(){
       audio.onerror=null;
       // Fallback to SW cache if GitHub fails
-      audio.src='./'+s;
+      audio.src=s;
       audio.play().catch(function(){});
     };
   } else {
-    // Offline: use SW cache
-    audio.src='./'+s;
+    // Offline: SW cache serves this
+    audio.src=s;
   }
 
   audio.play().catch(function(){
@@ -6751,7 +6761,7 @@ async function executeDonate() {
     // 3. Send a chat message notifying the friend
     var prevFriend = currentChatFriendId;
     currentChatFriendId = friendId;
-    await sendMessage('💸 yan na pera mo 🪙' + amount.toLocaleString() + ' buraot ka kask! Enjoy!');
+    await sendMessage('💸 yan na pera mo 🪙' + amount.toLocaleString() + ' buraot ka kasi! Enjoy!');
     currentChatFriendId = prevFriend;
 
     // 4. Success UI

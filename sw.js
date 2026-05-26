@@ -1,11 +1,16 @@
 // Block Brick Service Worker — offline support with progress reporting
-const CACHE_NAME = 'blockbrick-v61';
+const CACHE_NAME = 'blockbrick-v62';
 
-const ALL_FILES = [
+// Core files only — cached on install (fast)
+const CORE_FILES = [
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png',
+  './icon-512.png'
+];
+
+// Mp3s — cached in background after install
+const MP3_FILES = [
   './01_Kalapastangan.mp3',
   './02_Risk_It_All.mp3',
   './03_The_Man_Who_Cant_Be_Moved.mp3',
@@ -21,7 +26,7 @@ const ALL_FILES = [
   './ngayon_at_kailanman.mp3'
 ];
 
-var cacheProgress = { done: 0, total: ALL_FILES.length, finished: false };
+var cacheProgress = { done: 0, total: MP3_FILES.length, finished: false };
 
 function broadcast(msg) {
   self.clients.matchAll({ includeUncontrolled: true }).then(function(clients) {
@@ -29,25 +34,18 @@ function broadcast(msg) {
   });
 }
 
+// Step 1: Install — only cache core files (fast)
 self.addEventListener('install', function(e) {
   self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then(async function(cache) {
-      cacheProgress = { done: 0, total: ALL_FILES.length, finished: false };
-      broadcast({ type: 'CACHE_START', total: ALL_FILES.length });
-
-      for (var i = 0; i < ALL_FILES.length; i++) {
+      for (var i = 0; i < CORE_FILES.length; i++) {
         try {
-          var req = new Request(ALL_FILES[i], { cache: 'no-cache' });
+          var req = new Request(CORE_FILES[i], { cache: 'no-cache' });
           var resp = await fetch(req);
           await cache.put(req, resp);
         } catch(err) {}
-        cacheProgress.done++;
-        broadcast({ type: 'CACHE_PROGRESS', done: cacheProgress.done, total: cacheProgress.total });
       }
-
-      cacheProgress.finished = true;
-      broadcast({ type: 'CACHE_DONE' });
     })
   );
 });
@@ -63,6 +61,33 @@ self.addEventListener('activate', function(e) {
   );
 });
 
+// Step 2: Background cache mp3s after activate
+async function cacheMp3sInBackground() {
+  const cache = await caches.open(CACHE_NAME);
+  cacheProgress = { done: 0, total: MP3_FILES.length, finished: false };
+  broadcast({ type: 'CACHE_START', total: MP3_FILES.length });
+
+  for (var i = 0; i < MP3_FILES.length; i++) {
+    try {
+      // Skip if already cached
+      const already = await cache.match(MP3_FILES[i]);
+      if (already) {
+        cacheProgress.done++;
+        broadcast({ type: 'CACHE_PROGRESS', done: cacheProgress.done, total: cacheProgress.total });
+        continue;
+      }
+      var req = new Request(MP3_FILES[i], { cache: 'no-cache' });
+      var resp = await fetch(req);
+      await cache.put(req, resp);
+    } catch(err) {}
+    cacheProgress.done++;
+    broadcast({ type: 'CACHE_PROGRESS', done: cacheProgress.done, total: cacheProgress.total });
+  }
+
+  cacheProgress.finished = true;
+  broadcast({ type: 'CACHE_DONE' });
+}
+
 // Page can ask for current progress on load
 self.addEventListener('message', function(e) {
   if (e.data && e.data.type === 'GET_CACHE_STATUS') {
@@ -72,20 +97,43 @@ self.addEventListener('message', function(e) {
       total: cacheProgress.total
     });
   }
+  // Page tells SW to start background caching
+  if (e.data && e.data.type === 'START_BG_CACHE') {
+    cacheMp3sInBackground();
+  }
 });
 
 self.addEventListener('fetch', function(e) {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
+  const isGithubPages = url.href.includes('kioshisaiki-lab.github.io');
+  const isGithubRaw = url.href.includes('raw.githubusercontent.com/kioshisaiki-lab');
+  const isMp3 = url.pathname.endsWith('.mp3');
 
-  // Only cache our own GitHub Pages files, not external (Google Drive music)
-  if (!url.href.includes('kioshisaiki-lab.github.io')) return;
+  // Serve cached mp3s from GitHub raw (lazy cache fallback)
+  if (isGithubRaw && isMp3) {
+    e.respondWith(
+      caches.open(CACHE_NAME).then(async function(cache) {
+        const cached = await cache.match(e.request);
+        if (cached) return cached;
+        try {
+          const response = await fetch(e.request);
+          cache.put(e.request, response.clone());
+          return response;
+        } catch(err) {
+          return new Response('', { status: 503 });
+        }
+      })
+    );
+    return;
+  }
+
+  if (!isGithubPages) return;
 
   e.respondWith(
     caches.open(CACHE_NAME).then(async function(cache) {
       const cached = await cache.match(e.request, { ignoreSearch: true });
       if (cached) return cached;
-
       try {
         const response = await fetch(e.request);
         cache.put(e.request, response.clone());
