@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 56;
+var CURRENT_VERSION = 57;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -5325,10 +5325,25 @@ if(bioSaveBtn){
       var st = document.getElementById('passwordStatus');
       if(!pw){ st.textContent='⚠️ Enter a password first!'; return; }
       if(pw.length < 4){ st.textContent='⚠️ Password must be at least 4 characters!'; return; }
-      lsSet('accountPassword', pw);
-      st.textContent='✅ Password saved!';
+      _save['accountPassword'] = pw;
+      writeSave(_save);
+      // Also immediately push to Firebase so it's available on other devices
+      var pid = _save['playerId']||null;
+      if(pid && typeof FB !== 'undefined'){
+        fetch(FB+'/bb/saves/'+pid+'.json', {
+          method: 'PATCH',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({accountPassword: pw})
+        }).then(function(){
+          st.textContent='✅ Password saved & synced!';
+        }).catch(function(){
+          st.textContent='✅ Password saved (sync later)';
+        });
+      } else {
+        st.textContent='✅ Password saved!';
+      }
       document.getElementById('profilePasswordInput').value='';
-      setTimeout(function(){ st.textContent=''; }, 2000);
+      setTimeout(function(){ st.textContent=''; }, 2500);
     }
     savePasswordBtn.addEventListener('click', savePassword);
     savePasswordBtn.addEventListener('touchend', function(e){ e.preventDefault(); savePassword(); });
