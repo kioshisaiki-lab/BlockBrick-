@@ -714,16 +714,20 @@ window.addEventListener('load', function(){
   }
   tick();
 
+  var _startTime = Date.now();
+  var MIN_SHOW = 2200; // minimum ms the loader stays visible
+
   function finish(){
     if(_done) return; _done = true;
     cancelAnimationFrame(_raf);
-    // Fill all bricks with stagger then fade
     fillTo(TOTAL);
     document.getElementById('loaderBarLabel').textContent = '100%';
+    var elapsed = Date.now() - _startTime;
+    var delay = Math.max(500, MIN_SHOW - elapsed);
     setTimeout(function(){
       var el = document.getElementById('appLoader');
       if(el){ el.classList.add('fade-out'); setTimeout(function(){ el.remove(); },750); }
-    }, 500);
+    }, delay);
   }
 
   if(document.readyState==='complete'){ setTimeout(finish,500); }
