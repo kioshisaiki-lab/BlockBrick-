@@ -973,7 +973,7 @@ function _restoreFromFirebase(){
   if(!pid)return;
   var savedLvl=_save['savedLevel']||0;
   var savedCoins=_save['coins']||0;
-  if(savedLvl>1&&savedCoins>0)return; // already have good local data
+  // Note: auth login handles save restoration; this fallback is for non-auth recovery
   fetch(FB+'/bb/saves/'+pid+'.json',{cache:'no-store'})
     .then(function(r){return r.json();})
     .then(function(d){
@@ -7842,7 +7842,6 @@ async function handleAuth(){
 }
 
 async function onAuthSuccess(user){
-  // Try to load existing save from Firebase using email-based key
   var emailKey = user.email.replace(/[.@]/g,'_');
   var linkedId = null;
   try {
@@ -7852,22 +7851,28 @@ async function onAuthSuccess(user){
   } catch(e){}
 
   if(linkedId){
-    // Load their save and replace local data
+    // Existing account — load save from Firebase and reload
     try {
       var r2 = await fetch(FB+'/bb/saves/'+linkedId+'.json',{cache:'no-store'});
       var save = await r2.json();
-      if(save && save.savedLevel >= 1){
+      if(save){
         Object.keys(save).forEach(function(k){ _save[k]=save[k]; });
         _save['playerId'] = linkedId;
+        _save['bb_authed_email'] = user.email;
         writeSave(_save);
+        lsSet('bb_authed_email', user.email);
+        hideAuthScreen();
+        setAuthLoading(false);
+        // Reload so all game vars pick up the new save
+        setTimeout(function(){ window.location.reload(); }, 800);
+        return;
       }
     } catch(e){}
   } else {
-    // New account — link current playerId to this email
+    // New registration — link this device's Player ID to the email
     var myId = ls('playerId', null) || playerId;
-    var emailKey2 = user.email.replace(/[.@]/g,'_');
     try {
-      await fetch(FB+'/bb/auth/'+emailKey2+'.json',{
+      await fetch(FB+'/bb/auth/'+emailKey+'.json',{
         method:'PUT',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({playerId: myId, email: user.email, ts: Date.now()})
@@ -7877,7 +7882,6 @@ async function onAuthSuccess(user){
 
   lsSet('bb_authed_email', user.email);
   hideAuthScreen();
-  // Show name modal if no name yet
   if(!ls('playerName',null)){
     setTimeout(function(){
       var nm = document.getElementById('nameModal');
