@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 55;
+var CURRENT_VERSION = 56;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -958,6 +958,15 @@ window.addEventListener('load', function(){
       <textarea id="bioInput" rows="2" maxlength="80" placeholder="Write something about yourself..."></textarea>
       <button id="bioSaveBtn">💾 SAVE BIO</button>
     </div>
+    <div style="width:88vw;margin-bottom:3vw;margin-top:2vw;">
+      <div class="profile-section-title">🔒 SET PASSWORD</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:2.4vw;color:rgba(255,255,255,0.35);margin-bottom:2vw;">Protect your account. You'll need this to restore on another device.</div>
+      <input id="profilePasswordInput" type="password" maxlength="20" placeholder="Enter new password..." autocomplete="new-password" spellcheck="false"
+        style="width:88vw;font-family:'Share Tech Mono',monospace;font-size:3vw;padding:2vw 3vw;background:rgba(255,100,200,0.05);color:#fff;border:0.4vw solid rgba(255,100,200,0.3);border-radius:1.5vw;outline:none;caret-color:#ff64c8;margin-bottom:2vw;box-sizing:border-box;">
+      <button id="savePasswordBtn"
+        style="font-family:'Orbitron',sans-serif;font-size:2.8vw;font-weight:700;padding:2vw 5vw;background:rgba(255,100,200,0.15);color:#ff64c8;border:0.4vw solid rgba(255,100,200,0.5);border-radius:1.5vw;cursor:pointer;transition:all 0.2s;">🔒 SAVE PASSWORD</button>
+      <div id="passwordStatus" style="font-family:'Share Tech Mono',monospace;font-size:2.6vw;color:rgba(255,100,200,0.7);margin-top:1.5vw;min-height:4vw;"></div>
+    </div>
     <div class="profile-stats-grid" id="profileStatsGrid"></div>
     <div class="profile-section">
       <div class="profile-section-title" style="display:flex;align-items:center;gap:2vw;">🤝 Friends <span id="friendReqBadge" style="display:none;background:#ff3c3c;color:#fff;font-family:'Share Tech Mono',monospace;font-size:2.2vw;font-weight:700;min-width:5.5vw;height:5.5vw;border-radius:999px;align-items:center;justify-content:center;padding:0 1vw;box-shadow:0 0 8px rgba(255,60,60,0.6);">0</span></div>
@@ -970,9 +979,14 @@ window.addEventListener('load', function(){
     <div style="width:88vw;margin-bottom:3vw;margin-top:2vw;">
       <div class="profile-section-title">🔑 RESTORE ACCOUNT</div>
       <div style="font-family:'Share Tech Mono',monospace;font-size:2.4vw;color:rgba(255,255,255,0.35);margin-bottom:2vw;">Enter your Player ID to recover your progress</div>
-      <div style="display:flex;gap:2vw;">
+      <div style="display:flex;gap:2vw;margin-bottom:2vw;">
         <input id="recoverIdInput" type="text" maxlength="8" placeholder="Enter Player ID..." autocomplete="off" spellcheck="false"
           style="flex:1;font-family:'Share Tech Mono',monospace;font-size:3vw;padding:2vw 3vw;background:rgba(0,234,255,0.05);color:#fff;border:0.4vw solid rgba(0,234,255,0.3);border-radius:1.5vw;outline:none;caret-color:#00eaff;text-transform:uppercase;"
+          onkeydown="if(event.key==='Enter')recoverAccount()">
+      </div>
+      <div style="display:flex;gap:2vw;">
+        <input id="recoverPasswordInput" type="password" maxlength="20" placeholder="Password (if set)..." autocomplete="off" spellcheck="false"
+          style="flex:1;font-family:'Share Tech Mono',monospace;font-size:3vw;padding:2vw 3vw;background:rgba(0,234,255,0.05);color:#fff;border:0.4vw solid rgba(0,234,255,0.3);border-radius:1.5vw;outline:none;caret-color:#00eaff;"
           onkeydown="if(event.key==='Enter')recoverAccount()">
         <button onclick="recoverAccount()" id="recoverBtn"
           style="font-family:'Orbitron',sans-serif;font-size:2.8vw;font-weight:700;padding:2vw 4vw;background:rgba(0,234,255,0.15);color:#00eaff;border:0.4vw solid rgba(0,234,255,0.5);border-radius:1.5vw;cursor:pointer;white-space:nowrap;transition:all 0.2s;">🔑 RESTORE</button>
@@ -5302,6 +5316,23 @@ if(bioSaveBtn){
   }
   bioSaveBtn.addEventListener('click',saveBio);
   bioSaveBtn.addEventListener('touchend',function(e){e.preventDefault();saveBio();});
+
+  // Save Password
+  var savePasswordBtn = document.getElementById('savePasswordBtn');
+  if(savePasswordBtn){
+    function savePassword(){
+      var pw = (document.getElementById('profilePasswordInput').value||'').trim();
+      var st = document.getElementById('passwordStatus');
+      if(!pw){ st.textContent='⚠️ Enter a password first!'; return; }
+      if(pw.length < 4){ st.textContent='⚠️ Password must be at least 4 characters!'; return; }
+      lsSet('accountPassword', pw);
+      st.textContent='✅ Password saved!';
+      document.getElementById('profilePasswordInput').value='';
+      setTimeout(function(){ st.textContent=''; }, 2000);
+    }
+    savePasswordBtn.addEventListener('click', savePassword);
+    savePasswordBtn.addEventListener('touchend', function(e){ e.preventDefault(); savePassword(); });
+  }
 }
 
 // ── Friend Profile Viewer ─────────────────────────────────────────────────────
@@ -7953,9 +7984,11 @@ setInterval(function(){if(!playerName)return;fetch(FB+'/bb/trashtalk/'+playerNam
 // ── Account Recovery ─────────────────────────────────────────────────────────
 async function recoverAccount(){
   var input = document.getElementById('recoverIdInput');
+  var pwInput = document.getElementById('recoverPasswordInput');
   var status = document.getElementById('recoverStatus');
   var btn = document.getElementById('recoverBtn');
   var id = (input.value||'').trim().toUpperCase().slice(0,8);
+  var enteredPw = (pwInput ? pwInput.value||'' : '').trim();
   if(!id || id.length < 6){ status.textContent = '⚠️ Enter a valid Player ID'; return; }
   if(id === playerId){ status.textContent = '✅ That is already your current ID!'; return; }
   btn.textContent = '...'; btn.disabled = true;
@@ -7964,6 +7997,13 @@ async function recoverAccount(){
     var r = await fetch(FB+'/bb/saves/'+id+'.json', {cache:'no-store'});
     var d = await r.json();
     if(d && d.savedLevel && d.savedLevel >= 1){
+      // Check password if one is set on the account
+      var accountPw = d.accountPassword||'';
+      if(accountPw && accountPw !== enteredPw){
+        status.textContent = '❌ Wrong password!';
+        btn.textContent = '🔑 RESTORE'; btn.disabled = false;
+        return;
+      }
       // Merge: always keep the HIGHEST value for each stat
       var localLevel = Math.max(_save['savedLevel']||0, _save['highestLevel']||0);
       var localCoins = _save['coins']||0;
