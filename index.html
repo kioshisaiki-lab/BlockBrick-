@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 60;
+var CURRENT_VERSION = 61;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -3914,19 +3914,19 @@ document.getElementById('settingsMenuBtn').addEventListener('click',()=>{
 
 // ── Playlist ──────────────────────────────────────────────────────────────────
 const SONG_NAMES={
-  'https://drive.google.com/uc?export=view&id=1zHmHQleWoJ529_pfI8juu6nVXM5WJ18j':'Kalapastangan',
-  'https://drive.google.com/uc?export=view&id=1LAfn7Yj-NyCrqUbA2zLxWfkfHAbYPQDf':'Risk It All - Bruno Mars',
-  'https://drive.google.com/uc?export=view&id=1AxZ_LruAJ1qzKzrvwMoK07F-x4s3CNY7':'The Man Who Can\'t Be Moved',
-  'https://drive.google.com/uc?export=view&id=1AxZ_LruAJ1qzKzrvwMoK07F-x4s3CNY7':'Lifetime - Ben&Ben',
-  'https://drive.google.com/uc?export=view&id=1XKSFwxEEn5KeGSbxjv64JjzwW1fnXb4G':'Do I Wanna Know - Arctic Monkeys',
-  'https://drive.google.com/uc?export=view&id=1Ucy4OqCF6w5x6s_8jqEDXHevVl1cZ6i1':'Sagip',
-  'https://drive.google.com/uc?export=view&id=1Ucy4OqCF6w5x6s_8jqEDXHevVl1cZ6i1':'Hirap Kalimutan',
-  'https://drive.google.com/uc?export=view&id=1GJluVEsW2eIGqOYMQaKpYS_ZwAuzNVt5':'Tensionado - Soapdish',
-  'https://drive.google.com/uc?export=view&id=1wQlMTYKZ64P7w4dhzM7AxmUS2DXgHsZm':'Panata - Tothapi',
-  'https://drive.google.com/uc?export=view&id=1wQlMTYKZ64P7w4dhzM7AxmUS2DXgHsZm':'Back To Friends - sombr',
-  'https://drive.google.com/uc?export=view&id=1hCV-sGH_sYIa0bP4MN_ssJMiJizpclJd':'Ngayon Kailanman',
-  'https://drive.google.com/uc?export=view&id=1qWGjS1BHZ_st_n7FqsspouJkzpkJ6aaE':'The Night We Met - Lord Huron',
-  'https://drive.google.com/uc?export=view&id=1ZCFA02daQTG_BWmbWHagIwsupVQZsSKL':'Ngayon at Kailanman',
+  './01_Kalapastangan.mp3':'Kalapastangan',
+  './02_Risk_It_All.mp3':'Risk It All - Bruno Mars',
+  './03_The_Man_Who_Cant_Be_Moved.mp3':'The Man Who Can\'t Be Moved',
+  './05_Lifetime.mp3':'Lifetime - Ben&Ben',
+  './06_Do_I_Wanna_Know.mp3':'Do I Wanna Know - Arctic Monkeys',
+  './07_Sagip.mp3':'Sagip',
+  './08_Hirap_Kalimutan.mp3':'Hirap Kalimutan',
+  './09_Tensionado.mp3':'Tensionado - Soapdish',
+  './10_Panata.mp3':'Panata - Tothapi',
+  './11_Back_To_Friends.mp3':'Back To Friends - sombr',
+  './12_Ngayon_Kailanman.mp3':'Ngayon Kailanman',
+  './Lord%20Huron%20-%20The%20Night%20We%20Met%20(Official%20Audio)%20%5BKtlgYxa6BMU%5D.mp3':'The Night We Met - Lord Huron',
+  './ngayon_at_kailanman.mp3':'Ngayon at Kailanman',
 };
 var SONGS=Object.keys(SONG_NAMES);
 var musicOn=true,currentIdx=-1,currentSongName='',audio=new Audio();audio.volume=0.75;
@@ -3947,17 +3947,17 @@ function playMusic(){
   audio.onerror=null;
 
   if(navigator.onLine){
-    // Try GitHub stream first
-    audio.src=GITHUB_BASE+s.replace('./','');
-    // Fallback to SW cache if GitHub fails (e.g. onLine flag not updated yet)
+    // Stream from GitHub
+    audio.src=GITHUB_BASE+s;
     audio.onerror=function(){
       audio.onerror=null;
-      audio.src=s;
+      // Fallback to SW cache if GitHub fails
+      audio.src='./'+s;
       audio.play().catch(function(){});
     };
   } else {
-    // Offline: SW cache serves this
-    audio.src=s;
+    // Offline: use SW cache
+    audio.src='./'+s;
   }
 
   audio.play().catch(function(){
