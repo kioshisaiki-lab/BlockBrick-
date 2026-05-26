@@ -24,9 +24,6 @@ window.addEventListener('load', function(){
   html { -webkit-overflow-scrolling: touch; }
 </style>
 <title>Block Brick</title>
-<!-- Firebase Auth SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap');
   *{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;}
@@ -551,22 +548,6 @@ window.addEventListener('load', function(){
 <body>
 
 
-<!-- Auth Screen -->
-<div id="authScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(180deg,#060010 0%,#04000e 100%);flex-direction:column;align-items:center;justify-content:center;padding:6vw;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-  <div style="font-family:Orbitron,sans-serif;font-size:9vw;font-weight:900;color:#fff;letter-spacing:0.12em;text-shadow:0 0 30px #a03cff,0 0 60px rgba(160,60,255,0.4);margin-bottom:1vw;text-align:center;">BLOCK<br>BRICK</div>
-  <div style="font-family:Share Tech Mono,monospace;font-size:2.8vw;color:rgba(170,130,255,0.5);letter-spacing:0.2em;margin-bottom:8vw;text-align:center;">SIGN IN TO SAVE YOUR PROGRESS</div>
-  <div id="authTabs" style="display:flex;gap:0;width:88vw;margin-bottom:5vw;border-radius:2vw;overflow:hidden;border:0.4vw solid rgba(160,60,255,0.4);">
-    <button id="tabLogin" onclick="switchAuthTab('login')" style="flex:1;font-family:Orbitron,sans-serif;font-size:3.2vw;font-weight:700;padding:3vw;background:rgba(160,60,255,0.4);color:#fff;border:none;cursor:pointer;letter-spacing:0.06em;touch-action:manipulation;">SIGN IN</button>
-    <button id="tabRegister" onclick="switchAuthTab('register')" style="flex:1;font-family:Orbitron,sans-serif;font-size:3.2vw;font-weight:700;padding:3vw;background:transparent;color:rgba(255,255,255,0.45);border:none;cursor:pointer;letter-spacing:0.06em;touch-action:manipulation;">REGISTER</button>
-  </div>
-  <input id="authEmail" type="email" placeholder="EMAIL" autocomplete="email" style="font-family:Share Tech Mono,monospace;font-size:3.5vw;width:88vw;padding:3vw 4vw;background:rgba(255,255,255,0.06);color:#fff;border:0.4vw solid rgba(160,60,255,0.5);border-radius:2vw;outline:none;margin-bottom:3vw;caret-color:#a03cff;-webkit-user-select:text!important;user-select:text!important;touch-action:manipulation;">
-  <input id="authPassword" type="password" placeholder="PASSWORD" autocomplete="current-password" style="font-family:Share Tech Mono,monospace;font-size:3.5vw;width:88vw;padding:3vw 4vw;background:rgba(255,255,255,0.06);color:#fff;border:0.4vw solid rgba(160,60,255,0.5);border-radius:2vw;outline:none;margin-bottom:3vw;caret-color:#a03cff;-webkit-user-select:text!important;user-select:text!important;touch-action:manipulation;">
-  <div id="authError" style="font-family:Share Tech Mono,monospace;font-size:2.8vw;color:#ff6060;margin-bottom:3vw;text-align:center;min-height:4vw;width:88vw;"></div>
-  <button id="authSubmitBtn" onclick="handleAuth()" style="font-family:Orbitron,sans-serif;font-size:4vw;font-weight:700;padding:4vw 0;width:88vw;background:linear-gradient(135deg,rgba(160,60,255,0.5),rgba(100,20,200,0.5));color:#fff;border:0.5vw solid rgba(160,60,255,0.9);border-radius:2vw;cursor:pointer;letter-spacing:0.08em;touch-action:manipulation;box-shadow:0 0 24px rgba(160,60,255,0.3);margin-bottom:3vw;">SIGN IN</button>
-  <button onclick="handleForgotPassword()" style="font-family:Share Tech Mono,monospace;font-size:2.8vw;color:rgba(170,130,255,0.55);background:none;border:none;cursor:pointer;letter-spacing:0.06em;padding:2vw;touch-action:manipulation;">Forgot password?</button>
-  <button onclick="skipAuth()" style="font-family:Share Tech Mono,monospace;font-size:2.8vw;color:rgba(255,255,255,0.3);background:none;border:none;cursor:pointer;letter-spacing:0.06em;padding:2vw;touch-action:manipulation;margin-top:1vw;">Play as guest (progress may be lost)</button>
-</div>
-
 <!-- Player Name Modal -->
 <div id="nameModal" class="hidden">
   <h2>WELCOME!</h2>
@@ -803,12 +784,6 @@ window.addEventListener('load', function(){
       </div>
       <div id="recoverStatus" style="font-family:'Share Tech Mono',monospace;font-size:2.6vw;color:rgba(0,234,255,0.6);margin-top:1.5vw;min-height:4vw;"></div>
     </div>
-    <div style="width:88vw;margin-bottom:3vw;margin-top:2vw;" id="authStatusSection">
-      <div class="profile-section-title">📧 ACCOUNT</div>
-      <div id="authStatusLabel" style="font-family:'Share Tech Mono',monospace;font-size:2.6vw;color:rgba(170,130,255,0.6);margin-bottom:2vw;"></div>
-      <button onclick="signOutAuth()" id="signOutBtn" style="display:none;font-family:'Orbitron',sans-serif;font-size:2.8vw;font-weight:700;padding:2vw 5vw;background:rgba(255,60,60,0.1);color:rgba(255,100,100,0.9);border:0.4vw solid rgba(255,60,60,0.4);border-radius:1.5vw;cursor:pointer;margin-right:2vw;touch-action:manipulation;">🚪 SIGN OUT</button>
-      <button onclick="showAuthScreen();closeProfile();" id="signInFromProfileBtn" style="display:none;font-family:'Orbitron',sans-serif;font-size:2.8vw;font-weight:700;padding:2vw 5vw;background:rgba(160,60,255,0.15);color:#c080ff;border:0.4vw solid rgba(160,60,255,0.5);border-radius:1.5vw;cursor:pointer;touch-action:manipulation;">🔐 SIGN IN</button>
-    </div>
     <button class="lb-back" id="profileBack">← BACK</button>
   </div>
 
@@ -973,7 +948,7 @@ function _restoreFromFirebase(){
   if(!pid)return;
   var savedLvl=_save['savedLevel']||0;
   var savedCoins=_save['coins']||0;
-  // Note: auth login handles save restoration; this fallback is for non-auth recovery
+  if(savedLvl>1&&savedCoins>0)return; // already have good local data
   fetch(FB+'/bb/saves/'+pid+'.json',{cache:'no-store'})
     .then(function(r){return r.json();})
     .then(function(d){
@@ -4200,10 +4175,7 @@ if(playerNameInput){
 }
 if(!playerName){
   setTimeout(function(){
-    // Only show name modal if auth screen is not visible
-    var authScr = document.getElementById('authScreen');
-    var authVisible = authScr && authScr.style.display === 'flex';
-    if(!authVisible && nameModal){
+    if(nameModal){
       nameModal.classList.remove('hidden');
       nameModal.style.display='flex';
     }
@@ -4776,8 +4748,6 @@ function openProfile(){
   renderFriendsList();
   updateFriendRequestBadge();
   checkIncomingFriendRequests();
-  setTimeout(checkIncomingFriendRequests, 2000);
-  if(typeof updateProfileAuthStatus==='function') updateProfileAuthStatus();
   profileScreen.classList.add('show');history.pushState({bb:true},'');
 }
 
@@ -5030,9 +5000,9 @@ async function declineFriendRequest(req){
   renderFriendsList();
 }
 
-// Poll for requests every 10s
-setInterval(checkIncomingFriendRequests, 10000);
-setTimeout(checkIncomingFriendRequests, 1000);
+// Poll for requests every 30s
+setInterval(checkIncomingFriendRequests, 30000);
+setTimeout(checkIncomingFriendRequests, 5000);
 
 function sendChallenge(name,idx){
   const myBest=Math.max(ls('hs_easy',0),ls('hs_medium',0),ls('hs_hard',0));
@@ -7746,185 +7716,6 @@ setInterval(function(){if(!playerName)return;fetch(FB+'/bb/trashtalk/'+playerNam
 })();
 
 
-
-// ── Firebase Auth (Email/Password Login) ─────────────────────────────────────
-var _firebaseApp = null;
-var _firebaseAuth = null;
-
-(function initFirebaseAuth(){
-  try {
-    var firebaseConfig = {
-      apiKey: "AIzaSyBiVvzFfcvhL-6251tmCEh1GbdN7fje_EY",
-      authDomain: "blockbrick-bc39d.firebaseapp.com",
-      databaseURL: "https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "blockbrick-bc39d",
-      storageBucket: "blockbrick-bc39d.firebasestorage.app",
-      messagingSenderId: "786985806217",
-      appId: "1:786985806217:web:a3c3254315a66274f8d958",
-      measurementId: "G-K9RQP45H0L"
-    };
-    if (typeof firebase !== 'undefined') {
-      if (!firebase.apps.length) {
-        _firebaseApp = firebase.initializeApp(firebaseConfig);
-      } else {
-        _firebaseApp = firebase.app();
-      }
-      _firebaseAuth = firebase.auth();
-    }
-  } catch(e) { console.warn('Firebase Auth init failed:', e); }
-})();
-
-var _authMode = 'login'; // 'login' or 'register'
-
-function switchAuthTab(mode){
-  _authMode = mode;
-  var tl = document.getElementById('tabLogin');
-  var tr = document.getElementById('tabRegister');
-  var btn = document.getElementById('authSubmitBtn');
-  if(mode === 'login'){
-    if(tl){ tl.style.background='rgba(160,60,255,0.4)'; tl.style.color='#fff'; }
-    if(tr){ tr.style.background='transparent'; tr.style.color='rgba(255,255,255,0.45)'; }
-    if(btn) btn.textContent = 'SIGN IN';
-  } else {
-    if(tr){ tr.style.background='rgba(160,60,255,0.4)'; tr.style.color='#fff'; }
-    if(tl){ tl.style.background='transparent'; tl.style.color='rgba(255,255,255,0.45)'; }
-    if(btn) btn.textContent = 'CREATE ACCOUNT';
-  }
-  var errEl = document.getElementById('authError');
-  if(errEl) errEl.textContent = '';
-}
-
-function showAuthScreen(){
-  var el = document.getElementById('authScreen');
-  if(el){ el.style.display='flex'; }
-}
-
-function hideAuthScreen(){
-  var el = document.getElementById('authScreen');
-  if(el){ el.style.display='none'; }
-}
-
-function setAuthError(msg){
-  var el = document.getElementById('authError');
-  if(el) el.textContent = msg;
-}
-
-function setAuthLoading(loading){
-  var btn = document.getElementById('authSubmitBtn');
-  if(btn) btn.textContent = loading ? '...' : (_authMode==='login'?'SIGN IN':'CREATE ACCOUNT');
-  if(btn) btn.disabled = loading;
-}
-
-async function handleAuth(){
-  var email = (document.getElementById('authEmail').value||'').trim();
-  var pass = (document.getElementById('authPassword').value||'');
-  if(!email || !pass){ setAuthError('Please fill in all fields.'); return; }
-  if(!_firebaseAuth){ setAuthError('Auth not available. Play as guest.'); return; }
-  setAuthLoading(true);
-  setAuthError('');
-  try {
-    var cred;
-    if(_authMode === 'login'){
-      cred = await _firebaseAuth.signInWithEmailAndPassword(email, pass);
-    } else {
-      cred = await _firebaseAuth.createUserWithEmailAndPassword(email, pass);
-    }
-    await onAuthSuccess(cred.user);
-  } catch(e) {
-    var msg = e.message || 'Something went wrong.';
-    if(e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') msg = 'Wrong email or password.';
-    else if(e.code === 'auth/email-already-in-use') msg = 'Email already registered. Sign in instead.';
-    else if(e.code === 'auth/weak-password') msg = 'Password must be at least 6 characters.';
-    else if(e.code === 'auth/invalid-email') msg = 'Invalid email address.';
-    setAuthError(msg);
-    setAuthLoading(false);
-  }
-}
-
-async function onAuthSuccess(user){
-  var emailKey = user.email.replace(/[.@]/g,'_');
-  var linkedId = null;
-  try {
-    var r = await fetch(FB+'/bb/auth/'+emailKey+'.json',{cache:'no-store'});
-    var d = await r.json();
-    if(d && d.playerId) linkedId = d.playerId;
-  } catch(e){}
-
-  if(linkedId){
-    // Existing account — load save from Firebase and reload
-    try {
-      var r2 = await fetch(FB+'/bb/saves/'+linkedId+'.json',{cache:'no-store'});
-      var save = await r2.json();
-      if(save){
-        Object.keys(save).forEach(function(k){ _save[k]=save[k]; });
-        _save['playerId'] = linkedId;
-        _save['bb_authed_email'] = user.email;
-        writeSave(_save);
-        lsSet('bb_authed_email', user.email);
-        hideAuthScreen();
-        setAuthLoading(false);
-        // Reload so all game vars pick up the new save
-        setTimeout(function(){ window.location.reload(); }, 800);
-        return;
-      }
-    } catch(e){}
-  } else {
-    // New registration — link this device's Player ID to the email
-    var myId = ls('playerId', null) || playerId;
-    try {
-      await fetch(FB+'/bb/auth/'+emailKey+'.json',{
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({playerId: myId, email: user.email, ts: Date.now()})
-      });
-    } catch(e){}
-  }
-
-  lsSet('bb_authed_email', user.email);
-  hideAuthScreen();
-  if(!ls('playerName',null)){
-    setTimeout(function(){
-      var nm = document.getElementById('nameModal');
-      if(nm){ nm.classList.remove('hidden'); nm.style.display='flex'; }
-    }, 300);
-  }
-  setAuthLoading(false);
-}
-
-async function handleForgotPassword(){
-  var email = (document.getElementById('authEmail').value||'').trim();
-  if(!email){ setAuthError('Enter your email first.'); return; }
-  if(!_firebaseAuth){ setAuthError('Auth not available.'); return; }
-  try {
-    await _firebaseAuth.sendPasswordResetEmail(email);
-    setAuthError('');
-    var errEl = document.getElementById('authError');
-    if(errEl){ errEl.style.color='#00ff96'; errEl.textContent='Reset email sent! Check your inbox.'; }
-  } catch(e){
-    setAuthError('Could not send reset email. Check the address.');
-  }
-}
-
-function skipAuth(){
-  lsSet('bb_auth_skipped', true);
-  hideAuthScreen();
-  if(!ls('playerName',null)){
-    setTimeout(function(){
-      var nm = document.getElementById('nameModal');
-      if(nm){ nm.classList.remove('hidden'); nm.style.display='flex'; }
-    }, 300);
-  }
-}
-
-// Show auth screen on first launch if not already authed and not skipped
-(function(){
-  var alreadyAuthed = ls('bb_authed_email', null);
-  var skipped = ls('bb_auth_skipped', false);
-  if(!alreadyAuthed && !skipped){
-    showAuthScreen();
-  }
-})();
-
 // ── Account Recovery ─────────────────────────────────────────────────────────
 async function recoverAccount(){
   var input = document.getElementById('recoverIdInput');
@@ -7969,36 +7760,6 @@ async function recoverAccount(){
     status.textContent = '❌ Error connecting. Try again.';
   }
   btn.textContent = '🔑 RESTORE'; btn.disabled = false;
-}
-
-
-function signOutAuth(){
-  lsSet('bb_authed_email', null);
-  lsSet('bb_auth_skipped', false);
-  if(_firebaseAuth){ try{ _firebaseAuth.signOut(); }catch(e){} }
-  showMilestone('Signed out. See you next time!');
-  updateProfileAuthStatus();
-}
-
-function closeProfile(){
-  var ps = document.getElementById('profileScreen');
-  if(ps) ps.classList.remove('show');
-}
-
-function updateProfileAuthStatus(){
-  var email = ls('bb_authed_email', null);
-  var label = document.getElementById('authStatusLabel');
-  var signOutBtn = document.getElementById('signOutBtn');
-  var signInBtn = document.getElementById('signInFromProfileBtn');
-  if(email){
-    if(label) label.textContent = '✅ Signed in as: ' + email;
-    if(signOutBtn) signOutBtn.style.display = 'inline-block';
-    if(signInBtn) signInBtn.style.display = 'none';
-  } else {
-    if(label) label.textContent = '⚠️ Not signed in — progress may be lost';
-    if(signOutBtn) signOutBtn.style.display = 'none';
-    if(signInBtn) signInBtn.style.display = 'inline-block';
-  }
 }
 
 // ── Profile clan badge (watch profileScreen) ────────────────────────────────
