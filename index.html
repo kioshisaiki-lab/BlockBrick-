@@ -3768,19 +3768,19 @@ document.getElementById('settingsMenuBtn').addEventListener('click',()=>{
 
 // ── Playlist ──────────────────────────────────────────────────────────────────
 const SONG_NAMES={
-  'https://kioshisaiki-lab.github.io/BlockBrick-/01_Kalapastangan.mp3':'Kalapastangan',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/02_Risk_It_All.mp3':'Risk It All - Bruno Mars',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/03_The_Man_Who_Cant_Be_Moved.mp3':'The Man Who Can\'t Be Moved',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/05_Lifetime.mp3':'Lifetime - Ben&Ben',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/06_Do_I_Wanna_Know.mp3':'Do I Wanna Know - Arctic Monkeys',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/07_Sagip.mp3':'Sagip',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/08_Hirap_Kalimutan.mp3':'Hirap Kalimutan',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/09_Tensionado.mp3':'Tensionado - Soapdish',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/10_Panata.mp3':'Panata - Tothapi',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/11_Back_To_Friends.mp3':'Back To Friends - sombr',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/12_Ngayon_Kailanman.mp3':'Ngayon Kailanman',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/Lord%20Huron%20-%20The%20Night%20We%20Met%20(Official%20Audio)%20%5BKtlgYxa6BMU%5D.mp3':'The Night We Met - Lord Huron',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/ngayon_at_kailanman.mp3':'Ngayon at Kailanman',
+  './01_Kalapastangan.mp3':'Kalapastangan',
+  './02_Risk_It_All.mp3':'Risk It All - Bruno Mars',
+  './03_The_Man_Who_Cant_Be_Moved.mp3':'The Man Who Can\'t Be Moved',
+  './05_Lifetime.mp3':'Lifetime - Ben&Ben',
+  './06_Do_I_Wanna_Know.mp3':'Do I Wanna Know - Arctic Monkeys',
+  './07_Sagip.mp3':'Sagip',
+  './08_Hirap_Kalimutan.mp3':'Hirap Kalimutan',
+  './09_Tensionado.mp3':'Tensionado - Soapdish',
+  './10_Panata.mp3':'Panata - Tothapi',
+  './11_Back_To_Friends.mp3':'Back To Friends - sombr',
+  './12_Ngayon_Kailanman.mp3':'Ngayon Kailanman',
+  './Lord%20Huron%20-%20The%20Night%20We%20Met%20(Official%20Audio)%20%5BKtlgYxa6BMU%5D.mp3':'The Night We Met - Lord Huron',
+  './ngayon_at_kailanman.mp3':'Ngayon at Kailanman',
 };
 var SONGS=Object.keys(SONG_NAMES);
 var musicOn=true,currentIdx=-1,currentSongName='',audio=new Audio();audio.volume=0.75;
@@ -3813,11 +3813,8 @@ function _tryStartMusic(){}
 
 audio.addEventListener('ended',()=>{if(musicOn)playMusic();});
 audio.addEventListener('error',()=>{
-  var err = audio.error ? audio.error.message : 'unknown';
-  console.error('Audio error:', err, 'src:', audio.src);
-  // Show error briefly in song ticker for debugging
-  if(typeof songTicker !== 'undefined') songTicker.textContent = '⚠️ Audio err: ' + err;
-  setTimeout(function(){if(musicOn)playMusic();},2000);
+  // Song failed to load (e.g. file not on GitHub yet) - skip to next
+  setTimeout(function(){if(musicOn)playMusic();},1000);
 });
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){
