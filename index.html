@@ -2,12 +2,30 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 51;
+var CURRENT_VERSION = 52;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
   if(vb) vb.textContent='v'+CURRENT_VERSION;
   if(sv) sv.textContent='v'+CURRENT_VERSION;
+
+  // Register service worker for PWA auto-updates
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js').then(function(reg){
+      reg.update(); // force check for new version every load
+      reg.addEventListener('updatefound', function(){
+        var newSW = reg.installing;
+        newSW.addEventListener('statechange', function(){
+          if(newSW.state === 'installed' && navigator.serviceWorker.controller){
+            window.location.reload(); // new version ready, reload
+          }
+        });
+      });
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      window.location.reload();
+    });
+  }
 });
 </script>
 
