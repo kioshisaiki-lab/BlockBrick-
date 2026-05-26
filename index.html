@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 1.55;
+var CURRENT_VERSION = 1.56;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -4487,7 +4487,13 @@ async function fbRead(diff){
 }
 async function fbWrite(diff,name,score,level){
   if(!FB_READY)return;
-  var key=name.replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,40);
+  // Always use lowercase key to prevent duplicate entries (e.g. "Kyoshiiirk" vs "kyoshiiirk")
+  var key=name.toLowerCase().replace(/[^a-z0-9_-]/g,'_').slice(0,40);
+  // Also clean up any old mixed-case key that may exist
+  var oldKey=name.replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,40);
+  if(oldKey!==key){
+    try{await fetch(FB+'/bb/scores/'+diff+'/'+oldKey+'.json',{method:'DELETE'});}catch(e){}
+  }
   try{var cr=await fetch(FB+'/bb/scores/'+diff+'/'+key+'.json',{cache:'no-store'});if(cr.ok){var ex=await cr.json();if(ex&&ex.score>=score)return;}}catch(e){}
   await fetch(FB+'/bb/scores/'+diff+'/'+key+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,score,level,ts:Date.now()})});
 }
@@ -4772,9 +4778,16 @@ if(lbBack){
   lbBack.addEventListener('click',function(){if(lbScreen)lbScreen.classList.remove('show');});
 }
 (function(){var b=document.getElementById('lbSubmitBtn');if(!b)return;
-function ds(){var best=getHS(lbDiff);if(!best||best<=0){showMilestone('Play a game first!');return;}
-b.textContent='⏳ Submitting...';b.disabled=true;
-submitScore(lbDiff,best,ls('savedLevel',1)||1).then(function(){b.textContent='✅ Submitted!';setTimeout(function(){loadLb(lbDiff);b.textContent='📤 SUBMIT MY BEST SCORE';b.disabled=false;},1500);}).catch(function(){b.textContent='❌ Failed';b.disabled=false;});}
+function ds(){
+  var lvl=Math.max(ls('savedLevel',1)||1,ls('highestLevel',1)||1);
+  var eScore=getHS('easy'),mScore=getHS('medium'),hScore=getHS('hard');
+  if(!eScore&&!mScore&&!hScore){showMilestone('Play a game first!');return;}
+  b.textContent='⏳ Submitting...';b.disabled=true;
+  var tasks=[];
+  if(eScore>0)tasks.push(submitScore('easy',eScore,lvl));
+  if(mScore>0)tasks.push(submitScore('medium',mScore,lvl));
+  if(hScore>0)tasks.push(submitScore('hard',hScore,lvl));
+  Promise.all(tasks).then(function(){b.textContent='✅ Submitted!';setTimeout(function(){loadLb(lbDiff);b.textContent='📤 SUBMIT MY BEST SCORE';b.disabled=false;},1500);}).catch(function(){b.textContent='❌ Failed';b.disabled=false;});}
 b.addEventListener('click',ds);b.addEventListener('touchend',function(e){e.preventDefault();ds();});})();
 document.querySelectorAll('.lb-tab').forEach(function(btn){
   function switchTab(){
