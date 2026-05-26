@@ -3736,7 +3736,7 @@ const SONG_NAMES={
   'https://kioshisaiki-lab.github.io/BlockBrick-/10_Panata.mp3':'Panata - Tothapi',
   'https://kioshisaiki-lab.github.io/BlockBrick-/11_Back_To_Friends.mp3':'Back To Friends - sombr',
   'https://kioshisaiki-lab.github.io/BlockBrick-/12_Ngayon_Kailanman.mp3':'Ngayon Kailanman',
-  'https://kioshisaiki-lab.github.io/BlockBrick-/Lord_Huron_-_The_Night_We_Met__Official_Audio___KtlgYxa6BMU_.mp3':'The Night We Met - Lord Huron',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/Lord%20Huron%20-%20The%20Night%20We%20Met%20(Official%20Audio)%20%5BKtlgYxa6BMU%5D.mp3':'The Night We Met - Lord Huron',
   'https://kioshisaiki-lab.github.io/BlockBrick-/ngayon_at_kailanman.mp3':'Ngayon at Kailanman',
 };
 var SONGS=Object.keys(SONG_NAMES);
@@ -3753,8 +3753,12 @@ function playMusic(){
   currentSongName=SONG_NAMES[s]||s;
   songTicker.textContent='♪ '+currentSongName;
   audio.play().catch(function(){
-    // Autoplay blocked - wait for user touch then retry
     _musicPending=true;
+    // Retry on next user touch
+    document.addEventListener('touchstart', function retry(){
+      document.removeEventListener('touchstart', retry);
+      if(_musicPending && musicOn){ _musicPending=false; audio.play().catch(function(){}); }
+    }, {once:true, passive:true});
   });
 }
 var _musicPending=false;
