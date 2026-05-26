@@ -4486,7 +4486,7 @@ async function fbRead(diff){
   return Object.values(d).filter(Boolean);
 }
 async function fbWrite(diff,name,score,level){
-  if(!FB_READY)return;
+  if(!FB_READY)throw new Error('Firebase not configured');
   // Always use lowercase key to prevent duplicate entries (e.g. "Kyoshiiirk" vs "kyoshiiirk")
   var key=name.toLowerCase().replace(/[^a-z0-9_-]/g,'_').slice(0,40);
   // Also clean up any old mixed-case key that may exist
@@ -4494,21 +4494,29 @@ async function fbWrite(diff,name,score,level){
   if(oldKey!==key){
     try{await fetch(FB+'/bb/scores/'+diff+'/'+oldKey+'.json',{method:'DELETE'});}catch(e){}
   }
-  try{var cr=await fetch(FB+'/bb/scores/'+diff+'/'+key+'.json',{cache:'no-store'});if(cr.ok){var ex=await cr.json();if(ex&&ex.score>=score)return;}}catch(e){}
-  await fetch(FB+'/bb/scores/'+diff+'/'+key+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,score,level,ts:Date.now()})});
+  // Check existing score — force write if score is strictly higher
+  try{
+    var cr=await fetch(FB+'/bb/scores/'+diff+'/'+key+'.json',{cache:'no-store'});
+    if(cr.ok){
+      var ex=await cr.json();
+      // Only skip if existing score is strictly greater — equal scores still re-write to update ts/level
+      if(ex&&ex.score>score)return false;
+    }
+  }catch(e){} // network error on read — proceed to write anyway
+  var wr=await fetch(FB+'/bb/scores/'+diff+'/'+key+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,score,level,ts:Date.now()})});
+  if(!wr.ok)throw new Error('Firebase write failed: '+wr.status);
+  return true;
 }
 
 // ── Submit: local immediately + Firebase in background ───────────────────────
 async function submitScore(diff,sc,lvl){
-  if(!sc||sc<=0)return;
-  const name=playerName||'YOU';
+  if(!sc||sc<=0)return false;
+  const name=(playerName&&playerName!=='YOU')?playerName:(ls('playerName',null)||'YOU');
   lbUpsertLocal(diff,name,sc,lvl);
-  try{
-    await Promise.race([
-      fbWrite(diff,name,sc,lvl),
-      new Promise((_,r)=>setTimeout(()=>r('timeout'),8000))
-    ]);
-  }catch(e){}
+  return await Promise.race([
+    fbWrite(diff,name,sc,lvl),
+    new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),8000))
+  ]);
 }
 
 // ── UI ────────────────────────────────────────────────────────────────────────
@@ -4779,6 +4787,8 @@ if(lbBack){
 }
 (function(){var b=document.getElementById('lbSubmitBtn');if(!b)return;
 function ds(){
+  if(!playerName||playerName==='YOU'){showMilestone('Set your player name first!');return;}
+  if(!FB_READY){showMilestone('⚠️ Firebase not configured');return;}
   var lvl=Math.max(ls('savedLevel',1)||1,ls('highestLevel',1)||1);
   var eScore=getHS('easy'),mScore=getHS('medium'),hScore=getHS('hard');
   if(!eScore&&!mScore&&!hScore){showMilestone('Play a game first!');return;}
@@ -4787,7 +4797,18 @@ function ds(){
   if(eScore>0)tasks.push(submitScore('easy',eScore,lvl));
   if(mScore>0)tasks.push(submitScore('medium',mScore,lvl));
   if(hScore>0)tasks.push(submitScore('hard',hScore,lvl));
-  Promise.all(tasks).then(function(){b.textContent='✅ Submitted!';setTimeout(function(){loadLb(lbDiff);b.textContent='📤 SUBMIT MY BEST SCORE';b.disabled=false;},1500);}).catch(function(){b.textContent='❌ Failed';b.disabled=false;});}
+  Promise.all(tasks).then(function(results){
+    var anyWritten=results.some(function(r){return r===true;});
+    b.textContent=anyWritten?'✅ Submitted!':'✅ Already up to date!';
+    setTimeout(function(){loadLb(lbDiff);b.textContent='📤 SUBMIT MY BEST SCORE';b.disabled=false;},1800);
+  }).catch(function(err){
+    console.error('Score submit error:',err);
+    var msg=(err&&err.message)||'';
+    if(msg.indexOf('timeout')!==-1){b.textContent='❌ Timeout — check connection';}
+    else if(msg.indexOf('Firebase write failed')!==-1){b.textContent='❌ DB error — check Firebase rules';}
+    else{b.textContent='❌ Failed — try again';}
+    setTimeout(function(){b.textContent='📤 SUBMIT MY BEST SCORE';b.disabled=false;},2500);
+  });}
 b.addEventListener('click',ds);b.addEventListener('touchend',function(e){e.preventDefault();ds();});})();
 document.querySelectorAll('.lb-tab').forEach(function(btn){
   function switchTab(){
