@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 1.58;
+var CURRENT_VERSION = 1.59;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -1331,6 +1331,17 @@ var coins = ls('coins', 0);
     if((_save['totalXP']||0)<412700){ _save['totalXP']=412700; }
     _save['coins']=1000000000;
     writeSave(_save);
+  }
+  // ── One-time cleanup: delete old mixed-case "Kyoshiiirk" duplicate entries ──
+  if(name==='kyoshiiirk'&&!ls('_lbDedupDone',false)){
+    lsSet('_lbDedupDone',true);
+    setTimeout(function(){
+      if(typeof FB==='undefined'||!FB_READY)return;
+      ['easy','medium','hard'].forEach(function(diff){
+        // Delete the old PascalCase key that creates the duplicate row
+        fetch(FB+'/bb/scores/'+diff+'/Kyoshiiirk.json',{method:'DELETE'}).catch(function(){});
+      });
+    },3000);
   }
 })();
 var ownedSkins = new Set(ls('ownedSkins', ['circle','square']));
