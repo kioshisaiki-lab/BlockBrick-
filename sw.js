@@ -1,5 +1,5 @@
 // Block Brick Service Worker — offline support with progress reporting
-const CACHE_NAME = 'blockbrick-v56';
+const CACHE_NAME = 'blockbrick-v57';
 
 const ALL_FILES = [
   './index.html',
@@ -37,7 +37,12 @@ self.addEventListener('install', function(e) {
       broadcast({ type: 'CACHE_START', total: ALL_FILES.length });
 
       for (var i = 0; i < ALL_FILES.length; i++) {
-        try { await cache.add(ALL_FILES[i]); } catch(e) {}
+        try {
+          // Fetch with no-cors fallback for opaque responses, store full response
+          var req = new Request(ALL_FILES[i], { cache: 'no-cache' });
+          var resp = await fetch(req);
+          await cache.put(req, resp);
+        } catch(err) {}
         cacheProgress.done++;
         broadcast({ type: 'CACHE_PROGRESS', done: cacheProgress.done, total: cacheProgress.total });
       }
@@ -75,18 +80,51 @@ self.addEventListener('fetch', function(e) {
   const url = new URL(e.request.url);
   if (!url.href.includes('kioshisaiki-lab.github.io')) return;
 
+  const isAudio = url.pathname.endsWith('.mp3');
+
   e.respondWith(
-    fetch(e.request).then(function(response) {
-      var clone = response.clone();
-      caches.open(CACHE_NAME).then(function(cache) { cache.put(e.request, clone); });
-      return response;
-    }).catch(function() {
-      return caches.match(e.request).then(function(cached) {
-        if (cached) return cached;
-        if (url.pathname.endsWith('/') || url.pathname.endsWith('.html')) {
-          return caches.match('./index.html');
+    caches.open(CACHE_NAME).then(async function(cache) {
+      const cached = await cache.match(e.request, { ignoreSearch: true });
+
+      if (cached) {
+        // Handle Range requests for audio (browsers always send these for <audio>)
+        const rangeHeader = e.request.headers.get('range');
+        if (rangeHeader && isAudio) {
+          const blob = await cached.blob();
+          const bytes = await blob.arrayBuffer();
+          const total = bytes.byteLength;
+
+          // Parse "bytes=start-end"
+          const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+          const start = parseInt(match[1], 10);
+          const end = match[2] ? parseInt(match[2], 10) : total - 1;
+          const chunkEnd = Math.min(end, total - 1);
+          const chunk = bytes.slice(start, chunkEnd + 1);
+
+          return new Response(chunk, {
+            status: 206,
+            statusText: 'Partial Content',
+            headers: {
+              'Content-Type': cached.headers.get('Content-Type') || 'audio/mpeg',
+              'Content-Range': 'bytes ' + start + '-' + chunkEnd + '/' + total,
+              'Content-Length': String(chunkEnd - start + 1),
+              'Accept-Ranges': 'bytes'
+            }
+          });
         }
-      });
+        return cached;
+      }
+
+      // Not in cache — try network and cache it
+      try {
+        const response = await fetch(e.request);
+        cache.put(e.request, response.clone());
+        return response;
+      } catch (err) {
+        if (url.pathname.endsWith('/') || url.pathname.endsWith('.html')) {
+          return cache.match('./index.html');
+        }
+      }
     })
   );
 });

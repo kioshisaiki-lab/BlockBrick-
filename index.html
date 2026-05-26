@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 53;
+var CURRENT_VERSION = 52;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -27,7 +27,7 @@ window.addEventListener('load', function(){
     });
 
     // Listen for cache progress messages from SW
-    var _cacheToastActive = false; // only true during a live install, not status checks
+    var _cacheToastActive = false;
     navigator.serviceWorker.addEventListener('message', function(e) {
       var toast = document.getElementById('cacheToast');
       var text  = document.getElementById('cacheToastText');
@@ -37,26 +37,20 @@ window.addEventListener('load', function(){
       if (e.data.type === 'CACHE_START') {
         _cacheToastActive = true;
         toast.classList.add('show');
-        text.textContent = '\ud83d\udce6 Caching for offline... 0 / ' + e.data.total;
+        text.textContent = '📦 Caching for offline... 0 / ' + e.data.total;
         bar.style.width = '0%';
-      } else if (e.data.type === 'CACHE_PROGRESS') {
-        if (_cacheToastActive) {
-          var pct = Math.round((e.data.done / e.data.total) * 100);
-          text.textContent = '\ud83d\udce6 Caching for offline... ' + e.data.done + ' / ' + e.data.total;
-          bar.style.width = pct + '%';
-        }
-      } else if (e.data.type === 'CACHE_DONE') {
-        if (_cacheToastActive) {
-          _cacheToastActive = false;
-          text.textContent = '\u2705 Ready to play offline!';
-          bar.style.width = '100%';
-          setTimeout(function() { toast.classList.remove('show'); }, 3000);
-        }
+      } else if (e.data.type === 'CACHE_PROGRESS' && _cacheToastActive) {
+        var pct = Math.round((e.data.done / e.data.total) * 100);
+        text.textContent = '📦 Caching for offline... ' + e.data.done + ' / ' + e.data.total;
+        bar.style.width = pct + '%';
+      } else if (e.data.type === 'CACHE_DONE' && _cacheToastActive) {
+        _cacheToastActive = false;
+        text.textContent = '✅ Ready to play offline!';
+        bar.style.width = '100%';
+        setTimeout(function() { toast.classList.remove('show'); }, 3000);
       }
-      // GET_CACHE_STATUS responses are intentionally ignored here — no toast on page reload
     });
-
-    // Removed: GET_CACHE_STATUS poll on load — no longer needed and caused ghost toast
+    // No GET_CACHE_STATUS poll on load — removed to prevent ghost toast on reload
   }
 });
 </script>
