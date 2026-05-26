@@ -1,16 +1,11 @@
-// Block Brick Service Worker — offline support with full asset caching
+// Block Brick Service Worker — offline support with progress reporting
 const CACHE_NAME = 'blockbrick-v53';
-const BASE = 'https://kioshisaiki-lab.github.io/BlockBrick-/';
 
-const CORE_FILES = [
-  './',
+const ALL_FILES = [
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
-];
-
-const MP3_FILES = [
+  './icon-512.png',
   './01_Kalapastangan.mp3',
   './02_Risk_It_All.mp3',
   './03_The_Man_Who_Cant_Be_Moved.mp3',
@@ -22,24 +17,37 @@ const MP3_FILES = [
   './10_Panata.mp3',
   './11_Back_To_Friends.mp3',
   './12_Ngayon_Kailanman.mp3',
-  './Lord Huron - The Night We Met (Official Audio) [KtlgYxa6BMU].mp3',
+  './Lord%20Huron%20-%20The%20Night%20We%20Met%20(Official%20Audio)%20%5BKtlgYxa6BMU%5D.mp3',
   './ngayon_at_kailanman.mp3'
 ];
 
-// Install — cache core files immediately, mp3s in background
+// Broadcast progress to all open clients
+function broadcast(msg) {
+  self.clients.matchAll().then(function(clients) {
+    clients.forEach(function(c) { c.postMessage(msg); });
+  });
+}
+
 self.addEventListener('install', function(e) {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_NAME).then(function(cache) {
-      // Cache core files first (fast)
-      return cache.addAll(CORE_FILES).then(function() {
-        // Cache mp3s in background (slow, don't block install)
-        MP3_FILES.forEach(function(url) {
-          cache.add(url).catch(function() {
-            console.log('Could not cache mp3 (offline?): ' + url);
-          });
-        });
-      });
+    caches.open(CACHE_NAME).then(async function(cache) {
+      var total = ALL_FILES.length;
+      var done = 0;
+
+      broadcast({ type: 'CACHE_START', total: total });
+
+      for (var i = 0; i < ALL_FILES.length; i++) {
+        try {
+          await cache.add(ALL_FILES[i]);
+        } catch(err) {
+          console.log('Failed to cache: ' + ALL_FILES[i]);
+        }
+        done++;
+        broadcast({ type: 'CACHE_PROGRESS', done: done, total: total });
+      }
+
+      broadcast({ type: 'CACHE_DONE' });
     })
   );
 });
@@ -58,26 +66,22 @@ self.addEventListener('activate', function(e) {
   );
 });
 
-// Fetch — network first, fall back to cache (offline support)
+// Fetch — network first, fall back to cache
 self.addEventListener('fetch', function(e) {
-  // Skip non-GET and cross-origin (Firebase etc)
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   if (!url.href.includes('kioshisaiki-lab.github.io')) return;
 
   e.respondWith(
     fetch(e.request).then(function(response) {
-      // Save fresh copy to cache
       var clone = response.clone();
       caches.open(CACHE_NAME).then(function(cache) {
         cache.put(e.request, clone);
       });
       return response;
     }).catch(function() {
-      // Offline — serve from cache
       return caches.match(e.request).then(function(cached) {
         if (cached) return cached;
-        // If it's the main page, serve index.html
         if (url.pathname.endsWith('/') || url.pathname.endsWith('.html')) {
           return caches.match('./index.html');
         }
