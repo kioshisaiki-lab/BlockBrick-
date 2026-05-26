@@ -225,8 +225,10 @@ window.addEventListener('load', function(){
   #nameConfirmBtn:active{background:rgba(160,60,255,0.55);transform:scale(0.97);}
 
   /* ── Leaderboard Screen ── */
-  #lbScreen{position:absolute;inset:0;background:#060014;z-index:27;display:flex;flex-direction:column;align-items:center;padding:6vw 5vw 20vw;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;opacity:0;transform:translateY(18px);will-change:transform;pointer-events:none;visibility:hidden;transition:opacity 0.28s cubic-bezier(.4,0,.2,1),transform 0.28s cubic-bezier(.4,0,.2,1),visibility 0s linear 0.28s;}
+  #lbScreen{position:absolute;inset:0;background:#060014;z-index:27;display:flex;flex-direction:column;align-items:center;padding:0;overflow:hidden;opacity:0;transform:translateY(18px);will-change:transform;pointer-events:none;visibility:hidden;transition:opacity 0.28s cubic-bezier(.4,0,.2,1),transform 0.28s cubic-bezier(.4,0,.2,1),visibility 0s linear 0.28s;}
   #lbScreen.show{opacity:1;transform:translateY(0);pointer-events:auto;visibility:visible;transition:opacity 0.28s cubic-bezier(.4,0,.2,1),transform 0.28s cubic-bezier(.4,0,.2,1),visibility 0s linear 0s;}
+  #lbScrollArea{flex:1;width:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;display:flex;flex-direction:column;align-items:center;padding:6vw 5vw 4vw;}
+  #lbFooter{width:100%;display:flex;flex-direction:column;align-items:center;gap:2vw;padding:3vw 5vw 5vw;background:#060014;border-top:0.3vw solid rgba(160,60,255,0.15);flex-shrink:0;}
   #lbScreen h2{font-family:'Orbitron',sans-serif;font-size:7vw;font-weight:900;color:#fff;letter-spacing:0.12em;text-shadow:0 0 24px #a03cff,0 0 50px rgba(160,60,255,0.4);margin-bottom:1vw;}
   #lbSubtitle{font-family:'Share Tech Mono',monospace;font-size:2.6vw;color:rgba(170,130,255,0.5);letter-spacing:0.1em;margin-bottom:4vw;}
   #lbDiffTabs{display:flex;gap:2vw;margin-bottom:4vw;width:88vw;}
@@ -834,16 +836,20 @@ window.addEventListener('load', function(){
 
   <!-- Leaderboard Screen -->
   <div id="lbScreen">
-    <h2>🏆 LEADERBOARD</h2>
-    <div id="lbSubtitle">GLOBAL TOP SCORES</div>
-    <div id="lbDiffTabs">
-      <button class="lb-tab active" data-diff="easy">EASY</button>
-      <button class="lb-tab" data-diff="medium">MED</button>
-      <button class="lb-tab" data-diff="hard">HARD</button>
+    <div id="lbScrollArea">
+      <h2>🏆 LEADERBOARD</h2>
+      <div id="lbSubtitle">GLOBAL TOP SCORES</div>
+      <div id="lbDiffTabs">
+        <button class="lb-tab active" data-diff="easy">EASY</button>
+        <button class="lb-tab" data-diff="medium">MED</button>
+        <button class="lb-tab" data-diff="hard">HARD</button>
+      </div>
+      <div id="lbList"><div id="lbStatus">⏳ Loading...</div></div>
     </div>
-    <div id="lbList"><div id="lbStatus">⏳ Loading...</div></div>
-    <button id="lbSubmitBtn" style="font-family:Orbitron,sans-serif;font-size:3vw;font-weight:700;padding:2.5vw;width:88vw;background:rgba(0,255,150,0.1);color:#00ff96;border:0.4vw solid rgba(0,255,150,0.4);border-radius:2vw;cursor:pointer;margin-top:2vw;margin-bottom:3vw;flex-shrink:0;">📤 SUBMIT MY BEST SCORE</button>
-    <button class="lb-back" id="lbBack" style="margin-bottom:2vw;">← BACK</button>
+    <div id="lbFooter">
+      <button id="lbSubmitBtn" style="font-family:Orbitron,sans-serif;font-size:3vw;font-weight:700;padding:2.5vw;width:88vw;background:rgba(0,255,150,0.1);color:#00ff96;border:0.4vw solid rgba(0,255,150,0.4);border-radius:2vw;cursor:pointer;flex-shrink:0;">📤 SUBMIT MY BEST SCORE</button>
+      <button class="lb-back" id="lbBack" style="margin-bottom:2vw;">← BACK</button>
+    </div>
   </div>
 
   <div id="shopScreen">
@@ -3617,6 +3623,7 @@ musicToggle.addEventListener('change',()=>{musicOn=musicToggle.checked;if(musicO
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 function doStartGame(){
+  _musicStarted=true;
   playMusic();
   // ALWAYS resume saved progress — coins/XP/rank/level are never wiped
   const saved=ls('savedLevel',null);
@@ -3735,22 +3742,9 @@ function playMusic(){
 var _musicPending=false;
 var _musicStarted=false;
 
-// Start music on first user interaction (fixes autoplay block in WebView)
-function _tryStartMusic(){
-  if(!_musicStarted){
-    _musicStarted=true;
-    if(musicOn&&(audio.paused||_musicPending)){
-      _musicPending=false;
-      if(!audio.src||audio.src===''){
-        playMusic();
-      } else {
-        audio.play().catch(function(){playMusic();});
-      }
-    }
-  }
-}
-document.addEventListener('touchstart',_tryStartMusic,{once:false,passive:true});
-document.addEventListener('click',_tryStartMusic,{once:false,passive:true});
+// Music only starts when player hits START/CONTINUE (doStartGame or resumeGame)
+// _musicStarted flag is set there; this function is kept for resume-after-blur use only
+function _tryStartMusic(){}
 
 audio.addEventListener('ended',()=>{if(musicOn)playMusic();});
 audio.addEventListener('error',()=>{
