@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 62;
+var CURRENT_VERSION = 63;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -3956,19 +3956,8 @@ function playMusic(){
   // Clear any previous error handler
   audio.onerror=null;
 
-  if(navigator.onLine){
-    // Stream from GitHub (SW will cache it automatically)
-    audio.src=GITHUB_BASE+s.replace('./','');
-    audio.onerror=function(){
-      audio.onerror=null;
-      // Fallback to SW cache if GitHub fails
-      audio.src=s;
-      audio.play().catch(function(){});
-    };
-  } else {
-    // Offline: SW cache serves this
-    audio.src=s;
-  }
+  // Always use GitHub raw — SW intercepts and serves from cache when offline
+  audio.src=GITHUB_BASE+s.replace('./','');
 
   audio.play().catch(function(){
     _musicPending=true;

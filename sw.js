@@ -1,5 +1,5 @@
 // Block Brick Service Worker — offline support with progress reporting
-const CACHE_NAME = 'blockbrick-v62';
+const CACHE_NAME = 'blockbrick-v63';
 
 // Core files only — cached on install (fast)
 const CORE_FILES = [
@@ -9,21 +9,23 @@ const CORE_FILES = [
   './icon-512.png'
 ];
 
-// Mp3s — cached in background after install
+const GITHUB_BASE = 'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/';
+
+// Mp3s — cached in background using full GitHub raw URLs (must match audio.src)
 const MP3_FILES = [
-  './01_Kalapastangan.mp3',
-  './02_Risk_It_All.mp3',
-  './03_The_Man_Who_Cant_Be_Moved.mp3',
-  './05_Lifetime.mp3',
-  './06_Do_I_Wanna_Know.mp3',
-  './07_Sagip.mp3',
-  './08_Hirap_Kalimutan.mp3',
-  './09_Tensionado.mp3',
-  './10_Panata.mp3',
-  './11_Back_To_Friends.mp3',
-  './12_Ngayon_Kailanman.mp3',
-  './Lord%20Huron%20-%20The%20Night%20We%20Met%20(Official%20Audio)%20%5BKtlgYxa6BMU%5D.mp3',
-  './ngayon_at_kailanman.mp3'
+  GITHUB_BASE + '01_Kalapastangan.mp3',
+  GITHUB_BASE + '02_Risk_It_All.mp3',
+  GITHUB_BASE + '03_The_Man_Who_Cant_Be_Moved.mp3',
+  GITHUB_BASE + '05_Lifetime.mp3',
+  GITHUB_BASE + '06_Do_I_Wanna_Know.mp3',
+  GITHUB_BASE + '07_Sagip.mp3',
+  GITHUB_BASE + '08_Hirap_Kalimutan.mp3',
+  GITHUB_BASE + '09_Tensionado.mp3',
+  GITHUB_BASE + '10_Panata.mp3',
+  GITHUB_BASE + '11_Back_To_Friends.mp3',
+  GITHUB_BASE + '12_Ngayon_Kailanman.mp3',
+  GITHUB_BASE + 'Lord%20Huron%20-%20The%20Night%20We%20Met%20(Official%20Audio)%20%5BKtlgYxa6BMU%5D.mp3',
+  GITHUB_BASE + 'ngayon_at_kailanman.mp3'
 ];
 
 var cacheProgress = { done: 0, total: MP3_FILES.length, finished: false };
