@@ -2,115 +2,13 @@
 <html lang="en">
 <head>
 <script>
-// ── AUTO UPDATE (localStorage-based, survives WebView restarts) ──────────────
-var CURRENT_VERSION = 61;
-var FB_AU = 'https://blockbrick-bc39d-default-rtdb.asia-southeast1.firebasedatabase.app';
-
-(function(){
-  // Check if we have a newer version stored in localStorage
-  try {
-    var stored = localStorage.getItem('bb_app_html');
-    var storedVer = parseInt(localStorage.getItem('bb_app_version')||'0');
-    if(stored && storedVer > CURRENT_VERSION && stored.length > 5000){
-      // Newer version in localStorage - load it via data URI
-      try{
-        var encoded = 'data:text/html;charset=utf-8,' + encodeURIComponent(stored);
-        window.location.replace(encoded);
-      } catch(e){
-        document.open('text/html');
-        document.write(stored);
-        document.close();
-      }
-      return;
-    }
-  } catch(e){}
-
-  // No stored update — check Firebase for new version after page loads
-  window.addEventListener('load', function(){
-    fetch(FB_AU+'/bb/autoupdate/meta.json',{cache:'no-store'})
-      .then(function(r){return r.json();})
-      .then(function(meta){
-        var vb=document.getElementById('versionBadge');
-        var sv=document.getElementById('settingsVersion');
-        if(!meta||!meta.version){
-          if(vb)vb.textContent='v'+CURRENT_VERSION;
-          if(sv)sv.textContent='v'+CURRENT_VERSION+' · no update info';
-          return;
-        }
-        if(meta.version > CURRENT_VERSION){
-          if(vb)vb.textContent='⚡ UPDATING...';
-          if(sv)sv.textContent='v'+CURRENT_VERSION+' → v'+meta.version+'...';
-          doUpdate(meta);
-        } else {
-          if(vb)vb.textContent='v'+CURRENT_VERSION+' ✅';
-          if(sv)sv.textContent='v'+CURRENT_VERSION+' · ✅ up to date';
-        }
-      }).catch(function(){
-        var vb=document.getElementById('versionBadge');
-        if(vb)vb.textContent='v'+CURRENT_VERSION;
-      });
-  });
-})();
-
-function doUpdate(meta){
-  var total=meta.chunks||1;
-  var collected=new Array(total);
-  var loaded=0;
-
-  var ov=document.createElement('div');
-  ov.style.cssText='position:fixed;inset:0;background:#060010;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;touch-action:none;';
-  ov.innerHTML='<div style="font-family:Orbitron,sans-serif;font-size:6vw;font-weight:900;color:#fff;text-shadow:0 0 20px #a03cff;">⚡ UPDATING</div>'
-    +'<div id="auMsg" style="font-family:Share Tech Mono,monospace;font-size:3.5vw;color:rgba(170,130,255,0.8);">Downloading...</div>'
-    +'<div style="width:70vw;height:2vw;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden;">'
-    +'<div id="auBar" style="height:100%;width:0%;background:linear-gradient(90deg,#a03cff,#00eaff);transition:width 0.3s;"></div></div>';
-  document.body.appendChild(ov);
-
-  function setBar(p){var b=document.getElementById('auBar');if(b)b.style.width=p+'%';}
-  function setMsg(m){var s=document.getElementById('auMsg');if(s)s.textContent=m;}
-
-  var promises=[];
-  for(var i=0;i<total;i++){
-    (function(idx){
-      promises.push(
-        fetch(FB_AU+'/bb/autoupdate/chunks/c'+idx+'.json',{cache:'no-store'})
-          .then(function(r){return r.json();})
-          .then(function(d){
-            collected[idx]=d.d||'';
-            loaded++;
-            setBar(Math.round(loaded/total*85));
-            setMsg('Downloading '+loaded+'/'+total+'...');
-          })
-      );
-    })(i);
-  }
-
-  Promise.all(promises).then(function(){
-    setBar(95);setMsg('Saving update...');
-    var newHtml=collected.join('');
-    if(!newHtml||newHtml.length<5000){ov.remove();return;}
-    // Save to localStorage so next restart loads new version
-    try{
-      localStorage.setItem('bb_app_html', newHtml);
-      localStorage.setItem('bb_app_version', String(meta.version));
-    }catch(e){}
-    setBar(100); setMsg('✅ Updated! Restarting...');
-    setTimeout(function(){
-      try{
-        // Method 1: data URI (works in most WebViews)
-        var encoded = 'data:text/html;charset=utf-8,' + encodeURIComponent(newHtml);
-        window.location.replace(encoded);
-      } catch(e){
-        try{
-          // Method 2: document.write
-          document.open(); document.write(newHtml); document.close();
-        } catch(e2){
-          // Method 3: just reload, localStorage version will load
-          window.location.reload(true);
-        }
-      }
-    }, 1000);
-  }).catch(function(){ov.remove();});
-}
+var CURRENT_VERSION = 51;
+window.addEventListener('load', function(){
+  var vb=document.getElementById('versionBadge');
+  var sv=document.getElementById('settingsVersion');
+  if(vb) vb.textContent='v'+CURRENT_VERSION;
+  if(sv) sv.textContent='v'+CURRENT_VERSION;
+});
 </script>
 
 <meta charset="UTF-8">
@@ -690,7 +588,7 @@ function doUpdate(meta){
 </div>
 
 <div id="coinDisplay">🪙 0</div>
-<div id="versionBadge">v61</div>
+<div id="versionBadge">v51</div>
 
 <div id="progressBar"><div id="progressFill"></div></div>
 <div id="trophyPopup"><span id="trophyEmoji">🏆</span><div id="trophyTitle">TROPHY!</div><div id="trophyDesc"></div></div>
@@ -1042,14 +940,9 @@ function _restoreFromFirebase(){
   fetch(FB+'/bb/saves/'+pid+'.json',{cache:'no-store'})
     .then(function(r){return r.json();})
     .then(function(d){
-      if(!d)return;
-      // Restore all saved data from Firebase
+      if(!d||!d.savedLevel||d.savedLevel<2)return;
+      // Restore all saved data
       Object.keys(d).forEach(function(k){_save[k]=d[k];});
-      // Make sure savedLevel is set correctly
-      if(d.savedLevel&&d.savedLevel>1){
-        _save['savedLevel']=d.savedLevel;
-        _save['highestLevel']=d.highestLevel||d.savedLevel;
-      }
       writeSave(_save);
       setTimeout(function(){window.location.reload();},500);
     }).catch(function(){});
@@ -1080,11 +973,8 @@ function _writeSaveToFirebase(obj){
 let _save=loadSave();
 (function(){
   var hl=_save['highestLevel']||0,sl=_save['savedLevel']||0,tl=_save['totalLevels']||0;
-  if(tl>hl)hl=tl;
-  // Only update highestLevel, NOT savedLevel — savedLevel is where player actually is
-  if(hl>0)_save['highestLevel']=hl;
-  // If no savedLevel set yet, use highestLevel as starting point
-  if(!sl&&hl>0)_save['savedLevel']=hl;
+  if(tl>hl)hl=tl;if(sl>hl)hl=sl;
+  if(hl>0){_save['highestLevel']=hl;_save['savedLevel']=hl;}
 })();
 
 // ── Firebase Full Recovery ───────────────────────────────────────────────────
@@ -1137,11 +1027,9 @@ function lsSet(k,v){
 }
 function saveProgress(){
   if(typeof level==='undefined')return;
-  // Save CURRENT level (not highest) so player resumes where they left off
   var _hl=_save['highestLevel']||0;
   if(level>_hl){_save['highestLevel']=level;_hl=level;}
-  lsSet('highestLevel',_hl);
-  lsSet('savedLevel',level); // actual current level
+  lsSet('savedLevel',_hl);
   lsSet('savedScore',score);
   lsSet('savedDiff',difficulty);
   if(typeof lives!=='undefined')lsSet('savedLives',lives);
@@ -2699,7 +2587,7 @@ function updateBallDrops(){
     p.y+=p.vy*frameScale;p.pulse+=0.15*frameScale;
     if(hit(p.x-p.size/2,p.y-p.size/2,p.size,p.size,paddle.x,paddle.y,paddle.w,PH)){
       var d2=DIFF[difficulty];
-      var spd2=Math.min(d2.speedMax,d2.speedBase+Math.sqrt(level)*0.45);
+      var spd2=Math.min(d2.speedMax,d2.speedBase+Math.sqrt(level)*0.28);
       for(var i=0;i<p.mult-1;i++){
         var ang=(Math.random()*Math.PI*0.7)-Math.PI*0.35;
         balls.push({x:paddle.x+paddle.w/2,y:paddle.y-BS*2,vx:Math.sin(ang)*spd2*SX,vy:-Math.cos(ang)*spd2*SY,fire:false});
@@ -2764,9 +2652,9 @@ function drawBallDrops(){
 
 // ── Difficulty ────────────────────────────────────────────────────────────────
 const DIFF={
-  easy:  {speedBase:5.0,speedMax:10.0, scoreBonus:1,  label:'EASY',  color:'#00ff96'},
-  medium:{speedBase:6.8,speedMax:14.0, scoreBonus:1.5,label:'MEDIUM',color:'#ffc800'},
-  hard:  {speedBase:9.0,speedMax:18.0, scoreBonus:2,  label:'HARD',  color:'#ff3c3c'}
+  easy:  {speedBase:5.0,speedMax:8.0,  scoreBonus:1,  label:'EASY',  color:'#00ff96'},
+  medium:{speedBase:6.8,speedMax:11.0, scoreBonus:1.5,label:'MEDIUM',color:'#ffc800'},
+  hard:  {speedBase:9.0,speedMax:14.5, scoreBonus:2,  label:'HARD',  color:'#ff3c3c'}
 };
 let difficulty='easy';
 document.querySelectorAll('.diff-btn').forEach(btn=>{
@@ -3039,7 +2927,7 @@ function resetLevel(){
   });
   balls=[];powerDrops=[];particles=[];brickFlashes=[];ballDrops=[];paddleDrops=[];laserBolts=[];combo=0;
   perfectLevel=true;levelStartTime=performance.now();
-  const spd=Math.min(d.speedMax,d.speedBase+Math.sqrt(level)*0.45);
+  const spd=Math.min(d.speedMax,d.speedBase+Math.sqrt(level)*0.28);
   balls.push({x:540*SX,y:960*SY,vx:spd*SX,vy:-spd*SY,fire:false});
   bricks=[];
 
@@ -3315,7 +3203,7 @@ function update(ts){
               spawnPaddleDrop(br.x+br.w/2,br.y);
             }
             if(br.type==='dup'){
-              const spd=Math.min(d.speedMax,d.speedBase+Math.sqrt(level)*0.45);
+              const spd=Math.min(d.speedMax,d.speedBase+Math.sqrt(level)*0.28);
               add.push({x:b.x,y:b.y,vx:-spd*SX,vy:-spd*SY,fire:false});
               add.push({x:b.x,y:b.y,vx:spd*SX,vy:-spd*SY,fire:false});
             }
@@ -3347,7 +3235,7 @@ function update(ts){
     if(lives<=0){endGame();return;}
     saveProgress();
     shake(14);doLevelFlash('rgba(255,0,0,0.4)');
-    const spd=Math.min(DIFF[difficulty].speedMax,DIFF[difficulty].speedBase+Math.sqrt(level)*0.45);
+    const spd=Math.min(DIFF[difficulty].speedMax,DIFF[difficulty].speedBase+Math.sqrt(level)*0.28);
     balls.push({x:W/2,y:H/2,vx:spd*SX,vy:-spd*SY,fire:false});
   }
 
@@ -3368,12 +3256,6 @@ function update(ts){
     // Do NOT reset lives here — lives persist across levels so players keep what they earned/bought
     saveProgress();
     writeSave(_save); // force-flush immediately so closing app right now still saves
-    // Also push to Firebase immediately so crash won't lose progress
-    if(typeof playerId!=='undefined'&&playerId){
-      var _lvlSave={savedLevel:level,highestLevel:_save['highestLevel']||level,totalLevels:totalLevels||level};
-      fetch(FB+'/bb/saves/'+playerId+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(_lvlSave)}).catch(function(){});
-      fetch(FB+'/bb/players/'+playerId+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({level:level,id:playerId})}).catch(function(){});
-    }
     [{lvl:1,id:'lvl1'},{lvl:5,id:'lvl5'},{lvl:10,id:'lvl10'},{lvl:20,id:'lvl20'},{lvl:50,id:'lvl50'},{lvl:100,id:'lvl100'}]
       .forEach(t=>{if(lvlDone===t.lvl)awardTrophy(t.id);});
     checkRankTrophies();
@@ -3714,13 +3596,7 @@ musicToggle.addEventListener('change',()=>{musicOn=musicToggle.checked;if(musicO
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 function doStartGame(){
-  // Guarantee music starts
-  _musicStarted=true;
-  _musicPending=false;
-  _musicRetries=0;
-  if(musicOn){
-    playMusic();
-  }
+  playMusic();
   // ALWAYS resume saved progress — coins/XP/rank/level are never wiped
   const saved=ls('savedLevel',null);
   const savedScore=ls('savedScore',0);
@@ -3728,10 +3604,7 @@ function doStartGame(){
   document.querySelectorAll('.diff-btn').forEach(b=>{
     b.classList.toggle('selected',b.dataset.diff===difficulty);
   });
-  // Load saved level (where player actually was), not highest ever
-  var _bl=saved||_save['savedLevel']||0;
-  var _hl=_save['highestLevel']||0;
-  if(_bl<1)_bl=_hl; // fallback to highest if no saved level
+  var _bl=Math.max(saved||0,_save['highestLevel']||0);
   if(_bl>0){score=savedScore;level=_bl;lives=ls('savedLives',3);if(lives<=0)lives=3;}
   else{score=0;level=1;lives=3;}
   earnedTrophies=new Set();
@@ -3760,7 +3633,7 @@ document.getElementById('reviveYesBtn').addEventListener('click',()=>{
   lives=1;
   lsSet('savedLives',lives); // persist revived life
   const d=DIFF[difficulty];
-  const spd=Math.min(d.speedMax,d.speedBase+level*0.12);
+  const spd=Math.min(d.speedMax,d.speedBase+level*0.07);
   balls=[{x:W/2,y:H/2,vx:spd*SX,vy:-spd*SY,fire:false}];
   running=true;
   if(rafId)cancelAnimationFrame(rafId);
@@ -3788,7 +3661,7 @@ function goToMenu(){
   starsDisplay.style.display='none';
   overlayInfo.innerHTML='Drag to control paddle &nbsp;·&nbsp; Tap anywhere to start<br>🟡 Gold=split &nbsp;🔴 Armored=2 hits &nbsp;🟠 Explodes!<br>🔵 Blue brick drops a power-up!<br>Every 10th level is a <span style="color:#ff5050">BOSS LEVEL</span>.';
   updateRankDisplay();updateHSDisplay();updateCoinDisplay();
-  var _gbl=_save['savedLevel']||_save['highestLevel']||0;startBtn.textContent=(_gbl>1)?'▶ CONTINUE (LVL '+_gbl+')':'START GAME, LABAS MO GALIT MO DITO';
+  var _gbl=Math.max(_save['savedLevel']||0,_save['highestLevel']||0);startBtn.textContent=(_gbl>1)?'▶ CONTINUE (LVL '+_gbl+')':'START GAME, LABAS MO GALIT MO DITO';
   render();
 }
 
@@ -3806,19 +3679,19 @@ document.getElementById('settingsMenuBtn').addEventListener('click',()=>{
 
 // ── Playlist ──────────────────────────────────────────────────────────────────
 const SONG_NAMES={
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/01_Kalapastangan.mp3':'Kalapastangan',
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/02_Risk_It_All.mp3':'Risk It All - Bruno Mars',
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/03_The_Man_Who_Cant_Be_Moved.mp3':'The Man Who Can\'t Be Moved',
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/05_Lifetime.mp3':'Lifetime - Ben&Ben',
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/06_Do_I_Wanna_Know.mp3':'Do I Wanna Know - Arctic Monkeys',
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/07_Sagip.mp3':'Sagip',
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/08_Hirap_Kalimutan.mp3':'Hirap Kalimutan',
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/09_Tensionado.mp3':'Tensionado - Soapdish',
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/10_Panata.mp3':'Panata - Tothapi',
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/11_Back_To_Friends.mp3':'Back To Friends - sombr',
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/12_Ngayon_Kailanman.mp3':'Ngayon Kailanman',
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/Lord_Huron_-_The_Night_We_Met__Official_Audio___KtlgYxa6BMU_.mp3':'The Night We Met - Lord Huron',
-  'https://cdn.jsdelivr.net/gh/kioshisaiki-lab/BlockBrick-@main/ngayon_at_kailanman.mp3':'Ngayon at Kailanman',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/01_Kalapastangan.mp3':'Kalapastangan',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/02_Risk_It_All.mp3':'Risk It All - Bruno Mars',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/03_The_Man_Who_Cant_Be_Moved.mp3':'The Man Who Can\'t Be Moved',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/05_Lifetime.mp3':'Lifetime - Ben&Ben',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/06_Do_I_Wanna_Know.mp3':'Do I Wanna Know - Arctic Monkeys',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/07_Sagip.mp3':'Sagip',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/08_Hirap_Kalimutan.mp3':'Hirap Kalimutan',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/09_Tensionado.mp3':'Tensionado - Soapdish',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/10_Panata.mp3':'Panata - Tothapi',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/11_Back_To_Friends.mp3':'Back To Friends - sombr',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/12_Ngayon_Kailanman.mp3':'Ngayon Kailanman',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/Lord_Huron_-_The_Night_We_Met__Official_Audio___KtlgYxa6BMU_.mp3':'The Night We Met - Lord Huron',
+  'https://kioshisaiki-lab.github.io/BlockBrick-/ngayon_at_kailanman.mp3':'Ngayon at Kailanman',
 };
 var SONGS=Object.keys(SONG_NAMES);
 var musicOn=true,currentIdx=-1,currentSongName='',audio=new Audio();audio.volume=0.75;
@@ -3827,80 +3700,41 @@ function pickNext(){
   var n;do{n=Math.floor(Math.random()*SONGS.length);}while(n===currentIdx&&SONGS.length>1);
   currentIdx=n;return SONGS[currentIdx];
 }
-var _musicPending=false;
-var _musicStarted=false;
-var _musicRetries=0;
-var _musicLocked=false; // prevent overlapping play calls
-
 function playMusic(){
-  if(!musicOn||_musicLocked)return;
-  _musicRetries=0;
-  _doPlaySong(pickNext());
-}
-
-function _doPlaySong(s){
-  if(!musicOn||_musicLocked)return;
-  _musicLocked=true;
+  if(!musicOn)return;
+  const s=pickNext();
   audio.src=s;
   currentSongName=SONG_NAMES[s]||s;
-  if(songTicker)songTicker.textContent='♪ '+currentSongName;
-  audio.load();
-  setTimeout(function(){
-    if(!musicOn){_musicLocked=false;return;}
-    audio.play().then(function(){
-      _musicLocked=false;
-      _musicRetries=0;
-    }).catch(function(){
-      _musicLocked=false;
-      _musicRetries++;
-      if(_musicRetries<5){
-        // silently retry after delay
-        setTimeout(function(){
-          if(musicOn&&typeof running!=='undefined'&&running){
-            audio.play().catch(function(){
-              // skip to next song silently
-              setTimeout(function(){
-                _musicLocked=false;
-                if(musicOn)_doPlaySong(pickNext());
-              },500);
-            });
-          } else {
-            _musicPending=true;
-          }
-        },500);
-      } else {
-        // give up on this song, try next
-        _musicRetries=0;
-        setTimeout(function(){
-          _musicLocked=false;
-          if(musicOn&&typeof running!=='undefined'&&running)_doPlaySong(pickNext());
-        },1000);
-      }
-    });
-  },100);
+  songTicker.textContent='♪ '+currentSongName;
+  audio.play().catch(function(){
+    // Autoplay blocked - wait for user touch then retry
+    _musicPending=true;
+  });
 }
+var _musicPending=false;
+var _musicStarted=false;
 
-// Silently handle all audio errors - just skip to next song
-audio.addEventListener('ended',function(){
-  _musicLocked=false;
-  _musicRetries=0;
-  if(musicOn&&typeof running!=='undefined'&&running)_doPlaySong(pickNext());
-});
-audio.addEventListener('error',function(){
-  _musicLocked=false;
-  _musicRetries=0;
-  if(musicOn&&typeof running!=='undefined'&&running){
-    setTimeout(function(){_doPlaySong(pickNext());},1000);
+// Start music on first user interaction (fixes autoplay block in WebView)
+function _tryStartMusic(){
+  if(!_musicStarted){
+    _musicStarted=true;
+    if(musicOn&&(audio.paused||_musicPending)){
+      _musicPending=false;
+      if(!audio.src||audio.src===''){
+        playMusic();
+      } else {
+        audio.play().catch(function(){playMusic();});
+      }
+    }
   }
-});
-audio.addEventListener('stalled',function(){
-  _musicLocked=false;
-  if(musicOn&&typeof running!=='undefined'&&running){
-    setTimeout(function(){_doPlaySong(pickNext());},2000);
-  }
-});
-audio.addEventListener('abort',function(){
-  _musicLocked=false;
+}
+document.addEventListener('touchstart',_tryStartMusic,{once:false,passive:true});
+document.addEventListener('click',_tryStartMusic,{once:false,passive:true});
+
+audio.addEventListener('ended',()=>{if(musicOn)playMusic();});
+audio.addEventListener('error',()=>{
+  // Song failed to load (e.g. file not on GitHub yet) - skip to next
+  setTimeout(function(){if(musicOn)playMusic();},1000);
 });
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){
@@ -3916,9 +3750,9 @@ window.addEventListener('focus',()=>{if(musicOn&&_musicStarted)audio.play().catc
 window.addEventListener('pagehide',()=>{if(typeof level!=='undefined')saveProgress();writeSave(_save);});
 window.addEventListener('beforeunload',()=>{if(typeof level!=='undefined')saveProgress();writeSave(_save);});
 
-// ── Autosave every 3s during gameplay ───────────────────────────────────────
+// ── Autosave every 2s — always, not just when running ──────────────────────
 setInterval(()=>{
-  if(typeof level!=='undefined'&&typeof running!=='undefined'&&running){
+  if(typeof level!=='undefined'){
     saveProgress();
     writeSave(_save);
   }
@@ -4738,15 +4572,6 @@ function handleBack(){
     history.pushState({bb:true},'');
   } else if(top==='friendprofile'){
     document.getElementById('friendProfileScreen').classList.remove('show');
-    // If world chat / global chat is still open behind, restore gc-open
-    var gcLobby=document.getElementById('globalChatLobby');
-    var gcRoom=document.getElementById('globalChatRoom');
-    var chatScreen=document.getElementById('chatScreen');
-    if((gcLobby&&gcLobby.classList.contains('show'))||
-       (gcRoom&&gcRoom.classList.contains('show'))||
-       (chatScreen&&chatScreen.classList.contains('show'))){
-      document.body.classList.add('gc-open');
-    }
     history.pushState({bb:true},'');
   } else if(top==='spin'){
     document.getElementById('spinScreen').classList.remove('show');
@@ -6710,9 +6535,8 @@ async function checkIncomingDonations() {
   } catch (e) {}
 }
 
-// Check for donations on load and every 5 seconds
-setTimeout(checkIncomingDonations, 2000);
-setInterval(checkIncomingDonations, 5000);
+// Check for donations on load and when profile opens
+setTimeout(checkIncomingDonations, 4000);
 
 // ── Patch renderFriendsList to add Donate button ─────────────────────────────
 var _origRenderFriendsList = renderFriendsList;
