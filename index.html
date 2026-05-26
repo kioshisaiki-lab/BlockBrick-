@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 1.59;
+var CURRENT_VERSION = 1.60;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -4510,8 +4510,9 @@ async function fbWrite(diff,name,score,level){
     var cr=await fetch(FB+'/bb/scores/'+diff+'/'+key+'.json',{cache:'no-store'});
     if(cr.ok){
       var ex=await cr.json();
-      // Only skip if existing score is strictly greater — equal scores still re-write to update ts/level
+      // Skip only if existing score is higher AND existing level is also higher or equal
       if(ex&&ex.score>score)return false;
+      if(ex&&ex.score===score&&(ex.level||1)>=(level||1))return false;
     }
   }catch(e){} // network error on read — proceed to write anyway
   var wr=await fetch(FB+'/bb/scores/'+diff+'/'+key+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,score,level,ts:Date.now()})});
@@ -4563,9 +4564,9 @@ function renderLbEntries(entries,mode){
     return;
   }
 
-  const myName=playerName||'YOU';
+  const myName=(playerName||'YOU').toLowerCase();
   entries.forEach(function(e,i){
-    const isMe=(e.name===myName);
+    const isMe=(e.name.toLowerCase()===myName);
     const row=document.createElement('div');
     row.className='lb-row'+(isMe?' me':'');
     if(!isMe){row.style.cursor='pointer';}
@@ -4772,9 +4773,10 @@ async function loadLb(diff){
       new Promise((_,rej)=>setTimeout(()=>rej('timeout'),6000))
     ]);
     // Merge cloud + local (include local entry in case push is still pending)
+    // Use lowercase key for deduplication to prevent "Kyoshiiirk" vs "kyoshiiirk" duplicates
     const map=new Map();
-    online.forEach(e=>map.set(e.name,{...e}));
-    local.forEach(e=>{if(!map.has(e.name))map.set(e.name,{...e});});
+    online.forEach(e=>{var k=e.name.toLowerCase();var ex=map.get(k);if(!ex||e.score>ex.score)map.set(k,{...e});});
+    local.forEach(e=>{var k=e.name.toLowerCase();var ex=map.get(k);if(!ex||e.score>ex.score)map.set(k,{...e});});
     const merged=[...map.values()].sort((a,b)=>b.score-a.score).slice(0,50);
     renderLbEntries(merged,'online');
   }catch(e){/* stay offline */}
