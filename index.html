@@ -3912,12 +3912,31 @@ function pickNext(){
   var n;do{n=Math.floor(Math.random()*SONGS.length);}while(n===currentIdx&&SONGS.length>1);
   currentIdx=n;return SONGS[currentIdx];
 }
+const GITHUB_BASE='https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/';
+
 function playMusic(){
   if(!musicOn)return;
   const s=pickNext();
-  audio.src=s;
   currentSongName=SONG_NAMES[s]||s;
   songTicker.textContent='♪ '+currentSongName;
+
+  // Clear any previous error handler
+  audio.onerror=null;
+
+  if(navigator.onLine){
+    // Try GitHub stream first
+    audio.src=GITHUB_BASE+s.replace('./','');
+    // Fallback to SW cache if GitHub fails (e.g. onLine flag not updated yet)
+    audio.onerror=function(){
+      audio.onerror=null;
+      audio.src=s;
+      audio.play().catch(function(){});
+    };
+  } else {
+    // Offline: SW cache serves this
+    audio.src=s;
+  }
+
   audio.play().catch(function(){
     _musicPending=true;
     // Retry on next user touch
@@ -3936,7 +3955,8 @@ function _tryStartMusic(){}
 
 audio.addEventListener('ended',()=>{if(musicOn)playMusic();});
 audio.addEventListener('error',()=>{
-  // Song failed to load (e.g. file not on GitHub yet) - skip to next
+  // Only fires if not already handled by audio.onerror above
+  // Skip to next song after a short delay
   setTimeout(function(){if(musicOn)playMusic();},1000);
 });
 document.addEventListener('visibilitychange',()=>{
