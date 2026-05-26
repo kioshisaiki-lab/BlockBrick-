@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 53;
+var CURRENT_VERSION = 54;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -1242,8 +1242,8 @@ function saveProgress(){
   if(level>_hl){_save['highestLevel']=level;_hl=level;}
   lsSet('savedLevel',_hl);
   // Always keep the highest score ever achieved so CONTINUE always starts from the best score
-  var _prevScore=ls('savedScore',0)||0;
-  if(score>_prevScore)lsSet('savedScore',score);
+  var _prevScore=ls('savedScore_'+difficulty,0)||0;
+  if(score>_prevScore)lsSet('savedScore_'+difficulty,score);
   lsSet('savedDiff',difficulty);
   if(typeof lives!=='undefined')lsSet('savedLives',lives);
 }
@@ -1299,7 +1299,9 @@ var coins = ls('coins', 0);
     _save['hs_easy']=83910;
     _save['hs_medium']=1700928;
     _save['hs_hard']=1700928;
-    _save['savedScore']=1700928;
+    _save['savedScore_easy']=83910;
+    _save['savedScore_medium']=1700928;
+    _save['savedScore_hard']=1700928;
     _save['savedLevel']=446;
     _save['highestLevel']=446;
     _save['totalLevels']=446;
@@ -3646,8 +3648,8 @@ function showGameOver(){
   inGameControls.style.display='none';
   // Keep savedLevel so player can always resume
   // Keep the highest score ever achieved so CONTINUE always starts from the best score
-  var prevBest=ls('savedScore',0)||0;
-  if(score>prevBest)lsSet('savedScore',score);
+  var prevBest=ls('savedScore_'+difficulty,0)||0;
+  if(score>prevBest)lsSet('savedScore_'+difficulty,score);
   const d=DIFF[difficulty];
   const hs=getHS(difficulty);if(score>hs)setHS(difficulty,score);
   updateHSDisplay();updateRankDisplay();
@@ -3815,7 +3817,7 @@ function doStartGame(){
   playMusic();
   // ALWAYS resume saved progress — coins/XP/rank/level are never wiped
   const saved=ls('savedLevel',null);
-  const savedScore=ls('savedScore',0);
+  const savedScore=ls('savedScore_'+difficulty,0);
   // Always use the difficulty the player selected on the menu — never override it
   document.querySelectorAll('.diff-btn').forEach(b=>{
     b.classList.toggle('selected',b.dataset.diff===difficulty);
