@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 57;
+var CURRENT_VERSION = 58;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -1166,21 +1166,8 @@ function _restoreFromFirebase(){
     .then(function(r){return r.json();})
     .then(function(d){
       if(!d||!d.savedLevel||d.savedLevel<2)return;
-      // Merge: always keep the HIGHEST value
-      var localLevel=Math.max(_save['savedLevel']||0,_save['highestLevel']||0);
-      var localFriends=_save['friends']||[];
+      // Clean restore: load exactly what is in the cloud
       Object.keys(d).forEach(function(k){_save[k]=d[k];});
-      var restoredLevel=Math.max(d.savedLevel||0,d.highestLevel||0,localLevel);
-      _save['savedLevel']=restoredLevel;
-      _save['highestLevel']=restoredLevel;
-      _save['totalLevels']=restoredLevel;
-      // Merge friends
-      var cloudFriends=d.friends||[];
-      var mergedFriends=cloudFriends.slice();
-      localFriends.forEach(function(lf){
-        if(!mergedFriends.find(function(cf){return cf.id===lf.id;})){mergedFriends.push(lf);}
-      });
-      _save['friends']=mergedFriends;
       writeSave(_save);
       setTimeout(function(){window.location.reload();},500);
     }).catch(function(){});
@@ -8019,40 +8006,11 @@ async function recoverAccount(){
         btn.textContent = '🔑 RESTORE'; btn.disabled = false;
         return;
       }
-      // Merge: always keep the HIGHEST value for each stat
-      var localLevel = Math.max(_save['savedLevel']||0, _save['highestLevel']||0);
-      var localCoins = _save['coins']||0;
-      var localXP = _save['totalXP']||0;
-      var localTrophies = _save['totalTrophies']||0;
-      var localHsEasy = _save['hs_easy']||0;
-      var localHsMed = _save['hs_medium']||0;
-      var localHsHard = _save['hs_hard']||0;
-      var localFriends = _save['friends']||[];
+      // Clean restore: load exactly what is in the cloud
       Object.keys(d).forEach(function(k){ _save[k] = d[k]; });
       _save['playerId'] = id;
-      // Keep highest level
-      var restoredLevel = Math.max(d.savedLevel||0, d.highestLevel||0, localLevel);
-      _save['savedLevel'] = restoredLevel;
-      _save['highestLevel'] = restoredLevel;
-      _save['totalLevels'] = restoredLevel;
-      // Keep highest stats
-      _save['coins'] = Math.max(d.coins||0, localCoins);
-      _save['totalXP'] = Math.max(d.totalXP||0, localXP);
-      _save['totalTrophies'] = Math.max(d.totalTrophies||0, localTrophies);
-      _save['hs_easy'] = Math.max(d.hs_easy||0, localHsEasy);
-      _save['hs_medium'] = Math.max(d.hs_medium||0, localHsMed);
-      _save['hs_hard'] = Math.max(d.hs_hard||0, localHsHard);
-      // Merge friends lists (combine both, no duplicates)
-      var cloudFriends = d.friends||[];
-      var mergedFriends = cloudFriends.slice();
-      localFriends.forEach(function(lf){
-        if(!mergedFriends.find(function(cf){return cf.id===lf.id;})){
-          mergedFriends.push(lf);
-        }
-      });
-      _save['friends'] = mergedFriends;
       writeSave(_save);
-      status.textContent = '✅ Account found! LVL '+restoredLevel+' · Reloading...';
+      status.textContent = '✅ Account found! LVL '+d.savedLevel+' · Reloading...';
       setTimeout(function(){ window.location.reload(); }, 1500);
       return;
     }
@@ -8060,17 +8018,19 @@ async function recoverAccount(){
     var d2 = await r2.json();
     if(d2 && d2.name){
       _save['playerId'] = id;
-      _save['playerName'] = d2.name || _save['playerName'];
-      _save['savedLevel'] = Math.max(d2.level||1, _save['savedLevel']||0);
-      _save['highestLevel'] = Math.max(d2.level||1, _save['highestLevel']||0);
-      _save['hs_hard'] = Math.max(d2.score||0, _save['hs_hard']||0);
-      _save['hs_easy'] = Math.max(d2.score||0, _save['hs_easy']||0);
-      _save['hs_medium'] = Math.max(d2.score||0, _save['hs_medium']||0);
-      _save['totalTrophies'] = Math.max(d2.trophies||0, _save['totalTrophies']||0);
-      _save['totalXP'] = Math.max((d2.trophies||0)*2000, _save['totalXP']||0);
-      _save['coins'] = Math.max(_save['coins']||0, 1000);
+      _save['playerName'] = d2.name || '';
+      _save['savedLevel'] = d2.level || 1;
+      _save['highestLevel'] = d2.level || 1;
+      _save['totalLevels'] = d2.level || 1;
+      _save['hs_hard'] = d2.score || 0;
+      _save['hs_easy'] = d2.score || 0;
+      _save['hs_medium'] = d2.score || 0;
+      _save['totalTrophies'] = d2.trophies || 0;
+      _save['totalXP'] = (d2.trophies||0) * 2000;
+      _save['coins'] = 1000;
+      _save['friends'] = [];
       writeSave(_save);
-      status.textContent = '✅ Found '+d2.name+'! LVL '+str(_save['savedLevel'])+' · Reloading...';
+      status.textContent = '✅ Found '+d2.name+'! LVL '+(d2.level||1)+' · Reloading...';
       setTimeout(function(){ window.location.reload(); }, 1500);
       return;
     }
