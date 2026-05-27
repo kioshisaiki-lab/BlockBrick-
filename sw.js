@@ -1,5 +1,5 @@
-// Block Brick Service Worker v65
-const CACHE_NAME = 'blockbrick-v1.60';
+// Block Brick Service Worker v66 — music downloader support
+const CACHE_NAME = 'blockbrick-v3.6';
 
 const CORE_FILES = [
   './index.html',
@@ -101,6 +101,38 @@ self.addEventListener('message', function(e) {
   }
   if (e.data.type === 'START_BG_CACHE') {
     cacheMp3sInBackground();
+  }
+  if (e.data.type === 'CHECK_TRACK_CACHED') {
+    // Check whether a specific URL is in the cache
+    caches.open(CACHE_NAME).then(function(cache) {
+      return cache.match(e.data.url);
+    }).then(function(match) {
+      e.source.postMessage({ type: 'TRACK_CACHED_RESULT', url: e.data.url, cached: !!match });
+    }).catch(function() {
+      e.source.postMessage({ type: 'TRACK_CACHED_RESULT', url: e.data.url, cached: false });
+    });
+  }
+  if (e.data.type === 'CACHE_ONE_TRACK') {
+    // Download and cache a single track, report back
+    var url = e.data.url;
+    caches.open(CACHE_NAME).then(async function(cache) {
+      try {
+        var already = await cache.match(url);
+        if (already) {
+          e.source.postMessage({ type: 'ONE_TRACK_DONE', url: url, ok: true });
+          return;
+        }
+        var resp = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+        if (resp.ok) {
+          await cache.put(url, resp.clone());
+          e.source.postMessage({ type: 'ONE_TRACK_DONE', url: url, ok: true });
+        } else {
+          e.source.postMessage({ type: 'ONE_TRACK_DONE', url: url, ok: false });
+        }
+      } catch(err) {
+        e.source.postMessage({ type: 'ONE_TRACK_DONE', url: url, ok: false });
+      }
+    });
   }
 });
 

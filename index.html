@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 1.60;
+var CURRENT_VERSION = 3.6;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -379,6 +379,27 @@ window.addEventListener('load', function(){
   .stat-card{background:rgba(255,255,255,0.04);border:0.3vw solid rgba(255,255,255,0.1);border-radius:2.5vw;padding:3.5vw 3vw;text-align:center;}
   .stat-val{font-family:'Orbitron',sans-serif;font-size:5.5vw;font-weight:900;letter-spacing:0.05em;margin-bottom:1vw;}
   .stat-lbl{font-family:'Share Tech Mono',monospace;font-size:2.2vw;color:rgba(170,130,255,0.55);letter-spacing:0.08em;}
+
+  /* ── Music Downloader Screen ── */
+  #musicScreen{position:absolute;inset:0;background:#060014;z-index:27;display:flex;flex-direction:column;align-items:center;padding:6vw 5vw;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;opacity:0;transform:translateY(18px);will-change:transform;pointer-events:none;visibility:hidden;transition:opacity 0.28s cubic-bezier(.4,0,.2,1),transform 0.28s cubic-bezier(.4,0,.2,1),visibility 0s linear 0.28s;}
+  #musicScreen.show{opacity:1;transform:translateY(0);pointer-events:auto;visibility:visible;transition:opacity 0.28s cubic-bezier(.4,0,.2,1),transform 0.28s cubic-bezier(.4,0,.2,1),visibility 0s linear 0s;}
+  .music-track-row{display:flex;align-items:center;gap:3vw;background:rgba(255,255,255,0.04);border:0.3vw solid rgba(255,255,255,0.08);border-radius:2vw;padding:3vw 3.5vw;margin-bottom:2.5vw;width:88vw;box-sizing:border-box;}
+  .music-track-row.cached{border-color:rgba(0,255,150,0.35);background:rgba(0,255,150,0.04);}
+  .music-track-icon{font-size:6vw;flex-shrink:0;width:9vw;text-align:center;}
+  .music-track-info{flex:1;min-width:0;}
+  .music-track-name{font-family:'Orbitron',sans-serif;font-size:2.6vw;font-weight:700;color:#fff;letter-spacing:0.03em;margin-bottom:1vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .music-track-status{font-family:'Share Tech Mono',monospace;font-size:2.2vw;color:rgba(170,130,255,0.55);letter-spacing:0.06em;}
+  .music-track-btn{font-family:'Orbitron',sans-serif;font-size:2.4vw;font-weight:700;padding:2vw 3.5vw;border-radius:1.5vw;cursor:pointer;transition:all 0.2s;white-space:nowrap;flex-shrink:0;border:0.4vw solid;}
+  .music-track-btn.dl{background:rgba(160,60,255,0.2);color:#c080ff;border-color:rgba(160,60,255,0.6);}
+  .music-track-btn.dl:active{background:rgba(160,60,255,0.4);transform:scale(0.95);}
+  .music-track-btn.done{background:rgba(0,255,150,0.1);color:#00ff96;border-color:rgba(0,255,150,0.4);pointer-events:none;}
+  .music-track-btn.loading{background:rgba(255,200,0,0.1);color:#ffc800;border-color:rgba(255,200,0,0.4);pointer-events:none;}
+  #musicDlAllBtn{font-family:'Orbitron',sans-serif;font-size:3.5vw;font-weight:700;padding:3.5vw 0;width:88vw;background:rgba(160,60,255,0.2);color:#c080ff;border:0.4vw solid rgba(160,60,255,0.7);border-radius:2vw;cursor:pointer;text-align:center;margin-bottom:4vw;transition:all 0.2s;letter-spacing:0.05em;}
+  #musicDlAllBtn:active{background:rgba(160,60,255,0.4);transform:scale(0.97);}
+  #musicOverallBar{width:88vw;margin-bottom:3vw;}
+  #musicOverallLabel{font-family:'Share Tech Mono',monospace;font-size:2.6vw;color:rgba(0,255,150,0.7);margin-bottom:1.5vw;letter-spacing:0.06em;text-align:center;}
+  #musicBarWrap{width:100%;height:2.5vw;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;}
+  #musicBarFill{height:100%;width:0%;background:linear-gradient(90deg,#a03cff,#00eaff);border-radius:999px;transition:width 0.4s ease;}
 
   /* ── Challenge popup ── */
   #challengePopup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(0);background:rgba(8,0,20,0.98);border:0.5vw solid rgba(160,60,255,0.8);border-radius:3vw;padding:5vw 7vw;z-index:70;text-align:center;transition:transform 0.35s cubic-bezier(.34,1.56,.64,1),opacity 0.3s;pointer-events:none;opacity:0;width:80vw;box-shadow:0 0 40px rgba(160,60,255,0.3);}
@@ -784,6 +805,7 @@ window.addEventListener('load', function(){
     <span class="setting-label">MUSIC</span>
     <label class="toggle"><input type="checkbox" id="musicToggle" checked><span class="slider"></span></label>
   </div>
+  <button class="menu-btn" id="musicDlOpenBtn" style="margin-top:1vw;width:100%;">🎵 OFFLINE MUSIC</button>
   <div class="setting-row" style="justify-content:center;"><span class="setting-label" id="settingsVersion" style="font-size:2.2vw;color:rgba(170,130,255,0.4);">v27 · checking for update...</span></div><button class="menu-btn" id="settingsMenuBtn" style="margin-top:1vw;width:100%;">🏠 MENU</button>
 </div>
 
@@ -804,8 +826,18 @@ window.addEventListener('load', function(){
 <div id="songTicker">♪ —</div>
 
 <div id="shell">
-<!-- Offline cache progress toast -->
-<div id="cacheToast">
+<!-- Music Downloader Screen -->
+  <div id="musicScreen">
+    <h2 style="font-family:'Orbitron',sans-serif;font-size:6.5vw;font-weight:900;color:#fff;text-shadow:0 0 24px #a03cff;margin-bottom:1vw;text-align:center;">🎵 OFFLINE MUSIC</h2>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:2.6vw;color:rgba(170,130,255,0.5);margin-bottom:4vw;letter-spacing:0.1em;text-align:center;">Download songs to play without internet</div>
+    <div id="musicOverallBar">
+      <div id="musicOverallLabel">0 / 0 cached</div>
+      <div id="musicBarWrap"><div id="musicBarFill"></div></div>
+    </div>
+    <button id="musicDlAllBtn">⬇ DOWNLOAD ALL</button>
+    <div id="musicTrackList" style="width:88vw;"></div>
+    <button class="lb-back" id="musicScreenBack" style="margin-top:3vw;">← BACK</button>
+  </div>
   <div id="cacheToastText">📦 Caching for offline... 0 / 17</div>
   <div id="cacheToastBarWrap"><div id="cacheToastBar"></div></div>
 </div>
@@ -8082,6 +8114,164 @@ async function recoverAccount(){
   }
   btn.textContent = '🔑 RESTORE'; btn.disabled = false;
 }
+
+// ── Music Downloader ─────────────────────────────────────────────────────────
+(function(){
+  var GITHUB_BASE = 'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/';
+  var MP3_NAMES = [
+    '01_Kalapastangan.mp3',
+    '02_Risk_It_All.mp3',
+    '03_The_Man_Who_Cant_Be_Moved.mp3',
+    '05_Lifetime.mp3',
+    '06_Do_I_Wanna_Know.mp3',
+    '07_Sagip.mp3',
+    '08_Hirap_Kalimutan.mp3',
+    '09_Tensionado.mp3',
+    '10_Panata.mp3',
+    '11_Back_To_Friends.mp3',
+    '12_Ngayon_Kailanman.mp3',
+    'Lord%20Huron%20-%20The%20Night%20We%20Met%20(Official%20Audio)%20%5BKtlgYxa6BMU%5D.mp3',
+    'ngayon_at_kailanman.mp3'
+  ];
+  var TRACK_LABELS = [
+    'Kalapastangan','Risk It All','The Man Who Can\'t Be Moved',
+    'Lifetime','Do I Wanna Know','Sagip','Hirap Kalimutan','Tensionado',
+    'Panata','Back To Friends','Ngayon Kailanman',
+    'The Night We Met (Lord Huron)','Ngayon At Kailanman'
+  ];
+  var CACHE_NAME = 'blockbrick-v1.60';
+  var trackStates = []; // 'unknown' | 'cached' | 'downloading' | 'error'
+
+  function openMusicScreen(){
+    document.body.classList.add('sub-screen-open');
+    var sc = document.getElementById('musicScreen');
+    if(sc){ sc.classList.add('show'); buildTrackList(); }
+  }
+  function closeMusicScreen(){
+    var sc = document.getElementById('musicScreen');
+    if(sc) sc.classList.remove('show');
+    document.body.classList.remove('sub-screen-open');
+  }
+
+  var dlBtn = document.getElementById('musicDlOpenBtn');
+  if(dlBtn) dlBtn.onclick = openMusicScreen;
+  var backBtn = document.getElementById('musicScreenBack');
+  if(backBtn) backBtn.onclick = closeMusicScreen;
+
+  async function checkCached(url){
+    try {
+      var cache = await caches.open(CACHE_NAME);
+      var match = await cache.match(url);
+      return !!match;
+    } catch(e){ return false; }
+  }
+
+  async function downloadTrack(idx, btn, statusEl, rowEl){
+    var url = GITHUB_BASE + MP3_NAMES[idx];
+    trackStates[idx] = 'downloading';
+    btn.className = 'music-track-btn loading';
+    btn.textContent = '⏳';
+    statusEl.textContent = 'Downloading...';
+    try {
+      var resp = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+      if(resp.ok){
+        var cache = await caches.open(CACHE_NAME);
+        await cache.put(url, resp);
+        trackStates[idx] = 'cached';
+        btn.className = 'music-track-btn done';
+        btn.textContent = '✅';
+        statusEl.textContent = 'Ready offline';
+        rowEl.classList.add('cached');
+        updateOverallBar();
+      } else {
+        throw new Error('HTTP '+resp.status);
+      }
+    } catch(e){
+      trackStates[idx] = 'error';
+      btn.className = 'music-track-btn dl';
+      btn.textContent = '↺ RETRY';
+      statusEl.textContent = '⚠️ Failed — tap to retry';
+    }
+  }
+
+  function updateOverallBar(){
+    var total = MP3_NAMES.length;
+    var done = trackStates.filter(function(s){ return s === 'cached'; }).length;
+    var label = document.getElementById('musicOverallLabel');
+    var fill = document.getElementById('musicBarFill');
+    if(label) label.textContent = done + ' / ' + total + ' cached';
+    if(fill) fill.style.width = Math.round((done/total)*100)+'%';
+  }
+
+  async function buildTrackList(){
+    var list = document.getElementById('musicTrackList');
+    if(!list) return;
+    list.innerHTML = '<div style="font-family:Share Tech Mono,monospace;font-size:3vw;color:rgba(170,130,255,0.5);text-align:center;padding:4vw;">Checking cache...</div>';
+    // Check all in parallel
+    var checks = MP3_NAMES.map(function(name){ return checkCached(GITHUB_BASE + name); });
+    var results = await Promise.all(checks);
+    trackStates = results.map(function(r){ return r ? 'cached' : 'unknown'; });
+    list.innerHTML = '';
+    MP3_NAMES.forEach(function(name, i){
+      var isCached = trackStates[i] === 'cached';
+      var row = document.createElement('div');
+      row.className = 'music-track-row' + (isCached ? ' cached' : '');
+      var icon = document.createElement('div');
+      icon.className = 'music-track-icon';
+      icon.textContent = isCached ? '🎵' : '🎶';
+      var info = document.createElement('div');
+      info.className = 'music-track-info';
+      var tname = document.createElement('div');
+      tname.className = 'music-track-name';
+      tname.textContent = TRACK_LABELS[i] || name;
+      var status = document.createElement('div');
+      status.className = 'music-track-status';
+      status.textContent = isCached ? 'Ready offline' : 'Not downloaded';
+      info.appendChild(tname);
+      info.appendChild(status);
+      var btn = document.createElement('button');
+      btn.className = 'music-track-btn ' + (isCached ? 'done' : 'dl');
+      btn.textContent = isCached ? '✅' : '⬇';
+      (function(idx, b, s, r){
+        b.onclick = function(){
+          if(trackStates[idx]==='downloading') return;
+          downloadTrack(idx, b, s, r);
+        };
+      })(i, btn, status, row);
+      row.appendChild(icon);
+      row.appendChild(info);
+      row.appendChild(btn);
+      list.appendChild(row);
+    });
+    updateOverallBar();
+
+    // Download All button
+    var allBtn = document.getElementById('musicDlAllBtn');
+    if(allBtn){
+      allBtn.onclick = function(){
+        allBtn.textContent = '⏳ DOWNLOADING...';
+        allBtn.style.pointerEvents = 'none';
+        var rows = list.querySelectorAll('.music-track-row');
+        var pending = [];
+        trackStates.forEach(function(s, i){
+          if(s !== 'cached'){
+            var row = rows[i];
+            var btn2 = row ? row.querySelector('.music-track-btn') : null;
+            var stat = row ? row.querySelector('.music-track-status') : null;
+            if(btn2 && stat) pending.push(downloadTrack(i, btn2, stat, row));
+          }
+        });
+        Promise.all(pending).then(function(){
+          allBtn.textContent = '✅ ALL DOWNLOADED';
+          updateOverallBar();
+        }).catch(function(){
+          allBtn.textContent = '⬇ DOWNLOAD ALL';
+          allBtn.style.pointerEvents = '';
+        });
+      };
+    }
+  }
+})();
 
 // ── Profile clan badge (watch profileScreen) ────────────────────────────────
 new MutationObserver(function(){
