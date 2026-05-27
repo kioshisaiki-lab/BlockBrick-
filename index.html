@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 4.0;
+var CURRENT_VERSION = 4.1;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -1557,7 +1557,7 @@ input:checked + .slider {
       <img id="loaderLogo" src="icon-192.png" alt="Block Brick" onerror="this.style.display='none'">
     </div>
     <div id="loaderTitle">BLOCK<span>BRICK</span></div>
-    <div class="loader-ver">v4.0</div>
+    <div class="loader-ver">v4.1</div>
     <div id="bootConsole"></div>
     <div id="loaderBarWrap">
       <div id="loaderBarLabel">LOADING... 0%</div>
@@ -7389,6 +7389,8 @@ function startBgPoll(){
           if(newMsgs.length>prevUnread){
             const latest=newMsgs[newMsgs.length-1];
             showChatToast(f.name||f.id, latest.text.slice(0,60)+(latest.text.length>60?'…':''));
+            // Mark as seen so toast won't re-fire on next app open
+            lsSet('chat_lastseen_'+getChatRoomId(playerId,f.id), Date.now());
           }
         }
       }catch(e){}
@@ -8111,7 +8113,7 @@ function gcPath(room){
 // ── Unread badge tracking ──────────────────────────────────────────────────
 function gcGetUnread(room){ return ls('gc_unread_'+room, 0); }
 function gcSetUnread(room, n){ lsSet('gc_unread_'+room, n); }
-function gcClearUnread(room){ gcSetUnread(room, 0); updateGcNotifBadge(); }
+function gcClearUnread(room){ gcSetUnread(room, 0); lsSet('gc_lastseen_' + room, Date.now()); updateGcNotifBadge(); }
 
 function updateGcNotifBadge(){
   var badge = document.getElementById('gcNotifBadge');
