@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 3.6;
+var CURRENT_VERSION = 3.7;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -826,21 +826,24 @@ window.addEventListener('load', function(){
 <div id="songTicker">♪ —</div>
 
 <div id="shell">
-<!-- Music Downloader Screen -->
+<!-- Offline cache progress toast -->
+<div id="cacheToast">
+  <div id="cacheToastText">📦 Caching for offline... 0 / 17</div>
+  <div id="cacheToastBarWrap"><div id="cacheToastBar"></div></div>
+</div>
+
+  <!-- Music Downloader Screen -->
   <div id="musicScreen">
     <h2 style="font-family:'Orbitron',sans-serif;font-size:6.5vw;font-weight:900;color:#fff;text-shadow:0 0 24px #a03cff;margin-bottom:1vw;text-align:center;">🎵 OFFLINE MUSIC</h2>
     <div style="font-family:'Share Tech Mono',monospace;font-size:2.6vw;color:rgba(170,130,255,0.5);margin-bottom:4vw;letter-spacing:0.1em;text-align:center;">Download songs to play without internet</div>
     <div id="musicOverallBar">
-      <div id="musicOverallLabel">0 / 0 cached</div>
+      <div id="musicOverallLabel">Checking...</div>
       <div id="musicBarWrap"><div id="musicBarFill"></div></div>
     </div>
     <button id="musicDlAllBtn">⬇ DOWNLOAD ALL</button>
     <div id="musicTrackList" style="width:88vw;"></div>
     <button class="lb-back" id="musicScreenBack" style="margin-top:3vw;">← BACK</button>
   </div>
-  <div id="cacheToastText">📦 Caching for offline... 0 / 17</div>
-  <div id="cacheToastBarWrap"><div id="cacheToastBar"></div></div>
-</div>
   <!-- Revive Screen -->
   <div id="reviveScreen">
     <h2>GAME OVER</h2>
@@ -4337,6 +4340,7 @@ function updateQuickBtns(){
     document.getElementById('avatarPickerScreen').classList.contains('show')||
     document.getElementById('globalChatLobby').classList.contains('show')||
     document.getElementById('globalChatScreen').classList.contains('show')||
+    document.getElementById('musicScreen').classList.contains('show')||
     overlay.classList.contains('hidden');
   if(anySubScreen){
     document.body.classList.add('sub-screen-open');
@@ -4351,7 +4355,7 @@ _qObserver.observe(overlay,{attributes:true,attributeFilter:['class']});
 // Watch all sub-screens
 ['shopScreen','spinScreen','lbScreen','profileScreen','missionsScreen','statsScreen',
  'bgScreen','chatScreen','friendProfileScreen','avatarPickerScreen',
- 'globalChatLobby','globalChatScreen'].forEach(function(id){
+ 'globalChatLobby','globalChatScreen','musicScreen'].forEach(function(id){
   var el=document.getElementById(id);
   if(el)new MutationObserver(updateQuickBtns).observe(el,{attributes:true,attributeFilter:['class']});
 });
@@ -8119,58 +8123,52 @@ async function recoverAccount(){
 (function(){
   var GITHUB_BASE = 'https://raw.githubusercontent.com/kioshisaiki-lab/BlockBrick-/main/';
   var MP3_NAMES = [
-    '01_Kalapastangan.mp3',
-    '02_Risk_It_All.mp3',
-    '03_The_Man_Who_Cant_Be_Moved.mp3',
-    '05_Lifetime.mp3',
-    '06_Do_I_Wanna_Know.mp3',
-    '07_Sagip.mp3',
-    '08_Hirap_Kalimutan.mp3',
-    '09_Tensionado.mp3',
-    '10_Panata.mp3',
-    '11_Back_To_Friends.mp3',
-    '12_Ngayon_Kailanman.mp3',
+    '01_Kalapastangan.mp3','02_Risk_It_All.mp3','03_The_Man_Who_Cant_Be_Moved.mp3',
+    '05_Lifetime.mp3','06_Do_I_Wanna_Know.mp3','07_Sagip.mp3','08_Hirap_Kalimutan.mp3',
+    '09_Tensionado.mp3','10_Panata.mp3','11_Back_To_Friends.mp3','12_Ngayon_Kailanman.mp3',
     'Lord%20Huron%20-%20The%20Night%20We%20Met%20(Official%20Audio)%20%5BKtlgYxa6BMU%5D.mp3',
     'ngayon_at_kailanman.mp3'
   ];
   var TRACK_LABELS = [
-    'Kalapastangan','Risk It All','The Man Who Can\'t Be Moved',
-    'Lifetime','Do I Wanna Know','Sagip','Hirap Kalimutan','Tensionado',
-    'Panata','Back To Friends','Ngayon Kailanman',
-    'The Night We Met (Lord Huron)','Ngayon At Kailanman'
+    'Kalapastangan','Risk It All','The Man Who Can\'t Be Moved','Lifetime',
+    'Do I Wanna Know','Sagip','Hirap Kalimutan','Tensionado','Panata',
+    'Back To Friends','Ngayon Kailanman','The Night We Met','Ngayon At Kailanman'
   ];
   var CACHE_NAME = 'blockbrick-v1.60';
-  var trackStates = []; // 'unknown' | 'cached' | 'downloading' | 'error'
+  var trackStates = [];
+
+  var musicScr = document.getElementById('musicScreen');
+  var dlOpenBtn = document.getElementById('musicDlOpenBtn');
+  var backBtn = document.getElementById('musicScreenBack');
 
   function openMusicScreen(){
-    document.body.classList.add('sub-screen-open');
-    var sc = document.getElementById('musicScreen');
-    if(sc){ sc.classList.add('show'); buildTrackList(); }
+    var sp = document.getElementById('settingsPanel');
+    if(sp) sp.classList.remove('open');
+    if(musicScr){ musicScr.classList.add('show'); buildTrackList(); }
+    history.pushState({bb:true},'');
   }
   function closeMusicScreen(){
-    var sc = document.getElementById('musicScreen');
-    if(sc) sc.classList.remove('show');
-    document.body.classList.remove('sub-screen-open');
+    if(musicScr) musicScr.classList.remove('show');
+    // updateQuickBtns will fire via MutationObserver automatically
   }
 
-  var dlBtn = document.getElementById('musicDlOpenBtn');
-  if(dlBtn) dlBtn.onclick = openMusicScreen;
-  var backBtn = document.getElementById('musicScreenBack');
-  if(backBtn) backBtn.onclick = closeMusicScreen;
+  if(dlOpenBtn){
+    dlOpenBtn.addEventListener('touchend', function(e){ e.preventDefault(); openMusicScreen(); });
+    dlOpenBtn.addEventListener('click', function(e){ if(!('ontouchstart' in window)) openMusicScreen(); });
+  }
+  if(backBtn){
+    backBtn.addEventListener('touchend', function(e){ e.preventDefault(); closeMusicScreen(); });
+    backBtn.addEventListener('click', closeMusicScreen);
+  }
 
   async function checkCached(url){
-    try {
-      var cache = await caches.open(CACHE_NAME);
-      var match = await cache.match(url);
-      return !!match;
-    } catch(e){ return false; }
+    try{ var c=await caches.open(CACHE_NAME); return !!(await c.match(url)); }catch(e){ return false; }
   }
 
   async function downloadTrack(idx, btn, statusEl, rowEl){
     var url = GITHUB_BASE + MP3_NAMES[idx];
     trackStates[idx] = 'downloading';
-    btn.className = 'music-track-btn loading';
-    btn.textContent = '⏳';
+    btn.className = 'music-track-btn loading'; btn.textContent = '⏳';
     statusEl.textContent = 'Downloading...';
     try {
       var resp = await fetch(url, { mode: 'cors', cache: 'no-cache' });
@@ -8178,96 +8176,68 @@ async function recoverAccount(){
         var cache = await caches.open(CACHE_NAME);
         await cache.put(url, resp);
         trackStates[idx] = 'cached';
-        btn.className = 'music-track-btn done';
-        btn.textContent = '✅';
+        btn.className = 'music-track-btn done'; btn.textContent = '✅';
         statusEl.textContent = 'Ready offline';
         rowEl.classList.add('cached');
         updateOverallBar();
-      } else {
-        throw new Error('HTTP '+resp.status);
-      }
+      } else { throw new Error('HTTP '+resp.status); }
     } catch(e){
       trackStates[idx] = 'error';
-      btn.className = 'music-track-btn dl';
-      btn.textContent = '↺ RETRY';
+      btn.className = 'music-track-btn dl'; btn.textContent = '↺ RETRY';
       statusEl.textContent = '⚠️ Failed — tap to retry';
     }
   }
 
   function updateOverallBar(){
-    var total = MP3_NAMES.length;
-    var done = trackStates.filter(function(s){ return s === 'cached'; }).length;
-    var label = document.getElementById('musicOverallLabel');
+    var done = trackStates.filter(function(s){ return s==='cached'; }).length;
+    var lbl = document.getElementById('musicOverallLabel');
     var fill = document.getElementById('musicBarFill');
-    if(label) label.textContent = done + ' / ' + total + ' cached';
-    if(fill) fill.style.width = Math.round((done/total)*100)+'%';
+    if(lbl) lbl.textContent = done + ' / ' + MP3_NAMES.length + ' cached';
+    if(fill) fill.style.width = Math.round((done/MP3_NAMES.length)*100)+'%';
   }
 
   async function buildTrackList(){
     var list = document.getElementById('musicTrackList');
     if(!list) return;
     list.innerHTML = '<div style="font-family:Share Tech Mono,monospace;font-size:3vw;color:rgba(170,130,255,0.5);text-align:center;padding:4vw;">Checking cache...</div>';
-    // Check all in parallel
-    var checks = MP3_NAMES.map(function(name){ return checkCached(GITHUB_BASE + name); });
-    var results = await Promise.all(checks);
+    var results = await Promise.all(MP3_NAMES.map(function(n){ return checkCached(GITHUB_BASE+n); }));
     trackStates = results.map(function(r){ return r ? 'cached' : 'unknown'; });
     list.innerHTML = '';
     MP3_NAMES.forEach(function(name, i){
-      var isCached = trackStates[i] === 'cached';
+      var isCached = trackStates[i]==='cached';
       var row = document.createElement('div');
-      row.className = 'music-track-row' + (isCached ? ' cached' : '');
-      var icon = document.createElement('div');
-      icon.className = 'music-track-icon';
-      icon.textContent = isCached ? '🎵' : '🎶';
-      var info = document.createElement('div');
-      info.className = 'music-track-info';
-      var tname = document.createElement('div');
-      tname.className = 'music-track-name';
-      tname.textContent = TRACK_LABELS[i] || name;
-      var status = document.createElement('div');
-      status.className = 'music-track-status';
-      status.textContent = isCached ? 'Ready offline' : 'Not downloaded';
-      info.appendChild(tname);
-      info.appendChild(status);
+      row.className = 'music-track-row'+(isCached?' cached':'');
+      var icon = document.createElement('div'); icon.className='music-track-icon'; icon.textContent=isCached?'🎵':'🎶';
+      var info = document.createElement('div'); info.className='music-track-info';
+      var tname = document.createElement('div'); tname.className='music-track-name'; tname.textContent=TRACK_LABELS[i]||name;
+      var status = document.createElement('div'); status.className='music-track-status'; status.textContent=isCached?'Ready offline':'Not downloaded';
+      info.appendChild(tname); info.appendChild(status);
       var btn = document.createElement('button');
-      btn.className = 'music-track-btn ' + (isCached ? 'done' : 'dl');
-      btn.textContent = isCached ? '✅' : '⬇';
-      (function(idx, b, s, r){
-        b.onclick = function(){
-          if(trackStates[idx]==='downloading') return;
-          downloadTrack(idx, b, s, r);
-        };
-      })(i, btn, status, row);
-      row.appendChild(icon);
-      row.appendChild(info);
-      row.appendChild(btn);
+      btn.className='music-track-btn '+(isCached?'done':'dl');
+      btn.textContent=isCached?'✅':'⬇';
+      (function(idx,b,s,r){
+        b.addEventListener('touchend',function(e){e.preventDefault();if(trackStates[idx]==='downloading')return;downloadTrack(idx,b,s,r);});
+        b.addEventListener('click',function(){if(!('ontouchstart' in window)&&trackStates[idx]!=='downloading')downloadTrack(idx,b,s,r);});
+      })(i,btn,status,row);
+      row.appendChild(icon); row.appendChild(info); row.appendChild(btn);
       list.appendChild(row);
     });
     updateOverallBar();
 
-    // Download All button
     var allBtn = document.getElementById('musicDlAllBtn');
     if(allBtn){
       allBtn.onclick = function(){
-        allBtn.textContent = '⏳ DOWNLOADING...';
-        allBtn.style.pointerEvents = 'none';
+        allBtn.textContent='⏳ DOWNLOADING...'; allBtn.style.pointerEvents='none';
         var rows = list.querySelectorAll('.music-track-row');
         var pending = [];
-        trackStates.forEach(function(s, i){
-          if(s !== 'cached'){
-            var row = rows[i];
-            var btn2 = row ? row.querySelector('.music-track-btn') : null;
-            var stat = row ? row.querySelector('.music-track-status') : null;
-            if(btn2 && stat) pending.push(downloadTrack(i, btn2, stat, row));
+        trackStates.forEach(function(s,i){
+          if(s!=='cached'){
+            var r=rows[i], b=r&&r.querySelector('.music-track-btn'), st=r&&r.querySelector('.music-track-status');
+            if(b&&st) pending.push(downloadTrack(i,b,st,r));
           }
         });
-        Promise.all(pending).then(function(){
-          allBtn.textContent = '✅ ALL DOWNLOADED';
-          updateOverallBar();
-        }).catch(function(){
-          allBtn.textContent = '⬇ DOWNLOAD ALL';
-          allBtn.style.pointerEvents = '';
-        });
+        Promise.all(pending).then(function(){ allBtn.textContent='✅ ALL DOWNLOADED'; updateOverallBar(); })
+          .catch(function(){ allBtn.textContent='⬇ DOWNLOAD ALL'; allBtn.style.pointerEvents=''; });
       };
     }
   }
