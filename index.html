@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 4.1;
+var CURRENT_VERSION = 4.2;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -1557,7 +1557,7 @@ input:checked + .slider {
       <img id="loaderLogo" src="icon-192.png" alt="Block Brick" onerror="this.style.display='none'">
     </div>
     <div id="loaderTitle">BLOCK<span>BRICK</span></div>
-    <div class="loader-ver">v4.1</div>
+    <div class="loader-ver">v4.2</div>
     <div id="bootConsole"></div>
     <div id="loaderBarWrap">
       <div id="loaderBarLabel">LOADING... 0%</div>
@@ -1914,6 +1914,7 @@ input:checked + .slider {
         <input id="friendIdInput" type="text" maxlength="8" onkeydown="if(event.key==='Enter')addFriend()" placeholder="Enter friend ID..." autocomplete="off" spellcheck="false">
         <button id="addFriendBtn" onclick="addFriend()">+ ADD</button>
       </div>
+      <div id="addFriendStatus" style="font-family:'Share Tech Mono',monospace;font-size:2.8vw;text-align:center;min-height:5vw;margin-top:1.5vw;letter-spacing:0.06em;transition:opacity 0.3s;"></div>
       <div id="friendsList"></div>
     </div>
     <div style="width:88vw;margin-bottom:3vw;margin-top:2vw;">
@@ -5848,6 +5849,7 @@ function openLbPlayerSheet(entry){
       if(!friends.find(function(f){return f.name===entry.name;})){
         friends.push({id:'LB_'+entry.name.replace(/\s/g,'_'),name:foundName,score:foundScore,avatar:foundAvatar});
         lsSet('friends',friends);
+        _syncFriendsToFirebase(); // Fix B: persist to cloud
         if(typeof renderFriendsList==='function')renderFriendsList();
       }
       addBtn.textContent='✅ FRIEND ADDED!';
@@ -6283,10 +6285,57 @@ function renderFriendsList(){
     chalBtn.addEventListener('click',function(e){e.stopPropagation();sendChallenge(f.name,i);});
     chalBtn.addEventListener('touchend',function(e){e.stopPropagation();e.preventDefault();sendChallenge(f.name,i);});
 
+    const unfriendBtn=document.createElement('button');
+    unfriendBtn.className='friend-challenge';
+    unfriendBtn.textContent='🗑️';
+    unfriendBtn.title='Unfriend';
+    unfriendBtn.style.cssText='background:rgba(255,60,60,0.12);border-color:rgba(255,60,60,0.45);color:#ff8080;margin-left:1.5vw;';
+    (function(fid,fname){
+      function doUnfriend(e){
+        e.stopPropagation();
+        // Inline confirm — safe on all Android WebViews/PWA (confirm() can be blocked)
+        var existing=document.getElementById('_unfriendConfirm');
+        if(existing)existing.remove();
+        var modal=document.createElement('div');
+        modal.id='_unfriendConfirm';
+        modal.style.cssText='position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);';
+        var box=document.createElement('div');
+        box.style.cssText='background:rgba(10,0,28,0.98);border:0.5vw solid rgba(255,60,60,0.5);border-radius:4vw;padding:7vw 7vw;display:flex;flex-direction:column;align-items:center;gap:4vw;width:80vw;box-shadow:0 0 40px rgba(255,60,60,0.15);';
+        box.innerHTML='<div style="font-family:Orbitron,sans-serif;font-size:4vw;font-weight:900;color:#ff8080;letter-spacing:0.08em;text-align:center;">REMOVE FRIEND?</div>'
+          +'<div style="font-family:Share Tech Mono,monospace;font-size:3.2vw;color:rgba(255,255,255,0.6);text-align:center;">'+fname+'</div>';
+        var btnRow=document.createElement('div');
+        btnRow.style.cssText='display:flex;gap:3vw;width:100%;';
+        var cancelBtn=document.createElement('button');
+        cancelBtn.style.cssText='flex:1;font-family:Orbitron,sans-serif;font-size:3.2vw;font-weight:700;padding:3vw;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);border:0.4vw solid rgba(255,255,255,0.15);border-radius:2vw;cursor:pointer;';
+        cancelBtn.textContent='CANCEL';
+        var confirmBtn=document.createElement('button');
+        confirmBtn.style.cssText='flex:1;font-family:Orbitron,sans-serif;font-size:3.2vw;font-weight:700;padding:3vw;background:rgba(255,60,60,0.2);color:#ff8080;border:0.4vw solid rgba(255,60,60,0.55);border-radius:2vw;cursor:pointer;';
+        confirmBtn.textContent='REMOVE';
+        function closeModal(){modal.remove();}
+        cancelBtn.addEventListener('click',closeModal);
+        cancelBtn.addEventListener('touchend',function(ev){ev.preventDefault();closeModal();});
+        confirmBtn.addEventListener('click',function(){
+          closeModal();
+          friends=friends.filter(function(x){return x.id!==fid;});
+          lsSet('friends',friends);
+          try{localStorage.removeItem('sentReq_'+fid);}catch(ex){}
+          _syncFriendsToFirebase();
+          renderFriendsList();
+          showMilestone('👋 Removed '+fname);
+        });
+        confirmBtn.addEventListener('touchend',function(ev){ev.preventDefault();confirmBtn.click();});
+        btnRow.appendChild(cancelBtn);btnRow.appendChild(confirmBtn);
+        box.appendChild(btnRow);modal.appendChild(box);document.body.appendChild(modal);
+      }
+      unfriendBtn.addEventListener('click',doUnfriend);
+      unfriendBtn.addEventListener('touchend',function(e){e.preventDefault();doUnfriend(e);});
+    })(f.id, f.name||f.id);
+
     row.appendChild(avatarEl);
     row.appendChild(infoEl);
     row.appendChild(chatBtn);
     row.appendChild(chalBtn);
+    row.appendChild(unfriendBtn);
 
     // Tap row = view friend profile (only if not scrolling)
     var _rowTouchStartX=0, _rowTouchStartY=0;
@@ -6309,6 +6358,16 @@ function renderFriendsList(){
 
 // ── Friend Request System ─────────────────────────────────────────────────────
 var pendingRequests = ls('pendingRequests', []); // incoming requests [{id,name,avatar,score,ts}]
+
+// Fix B: Helper to sync friends list to Firebase so it's never lost on restore
+function _syncFriendsToFirebase(){
+  if(!playerId||typeof FB==='undefined') return;
+  fetch(FB+'/bb/saves/'+playerId+'.json',{
+    method:'PATCH',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({friends: friends})
+  }).catch(function(){});
+}
 
 async function sendFriendRequestToId(targetId, targetName, targetAvatar, targetScore){
   if(!targetId || targetId===playerId) return 'self';
@@ -6338,25 +6397,33 @@ async function sendFriendRequestToId(targetId, targetName, targetAvatar, targetS
 async function addFriend(){
   const input=document.getElementById('friendIdInput');
   const id=(input.value||'').trim().toUpperCase().slice(0,8);
+  const statusEl=document.getElementById('addFriendStatus');
+  function setAddStatus(msg,color){
+    if(!statusEl)return;
+    statusEl.textContent=msg;
+    statusEl.style.color=color||'rgba(186,230,253,0.8)';
+    statusEl.style.opacity='1';
+    clearTimeout(statusEl._t);
+    statusEl._t=setTimeout(function(){statusEl.style.opacity='0';setTimeout(function(){statusEl.textContent='';},300);},4000);
+  }
   if(!id||id===playerId){return;}
   if(friends.find(f=>f.id===id)){
     input.value='';
-    showMilestone('✅ Already friends!');
+    setAddStatus('✅ Already friends!','rgba(0,255,150,0.85)');
     return;
   }
   const btn=document.getElementById('addFriendBtn');
   btn.textContent='...';btn.disabled=true;
+  setAddStatus('🔍 Looking up player...','rgba(186,230,253,0.6)');
   if(!FB_READY){
-    // Offline fallback — just add directly
     friends.push({id,name:id,score:0,avatar:'😎'});
     lsSet('friends',friends);
     input.value='';
     renderFriendsList();
     btn.textContent='+ ADD';btn.disabled=false;
-    showMilestone('✅ Friend added!');
+    setAddStatus('✅ Friend added!','rgba(0,255,150,0.85)');
     return;
   }
-  // Look up player info AND send request in parallel for speed
   let name=id,score=0,avatar='😎';
   const [playerData, result] = await Promise.all([
     fetch(FB+'/bb/players/'+id+'.json',{cache:'no-store'})
@@ -6367,10 +6434,11 @@ async function addFriend(){
   if(playerData){name=playerData.name||id;score=playerData.score||0;avatar=playerData.avatar||'😎';}
   input.value='';
   btn.textContent='+ ADD';btn.disabled=false;
-  if(result==='ok') showMilestone('📨 Friend request sent to '+name+'!');
-  else if(result==='already') showMilestone('✅ Already friends!');
-  else if(result==='sent') showMilestone('📨 Request already sent!');
-  else showMilestone('⚠️ Could not send request.');
+  if(result==='ok') setAddStatus('📨 Request sent to '+name+'!','rgba(56,189,248,0.9)');
+  else if(result==='already') setAddStatus('✅ Already friends!','rgba(0,255,150,0.85)');
+  else if(result==='sent') setAddStatus('📨 Request already sent to '+name+'!','rgba(255,200,80,0.85)');
+  else if(result==='offline') setAddStatus('⚠️ No connection. Try again.','rgba(255,150,80,0.85)');
+  else setAddStatus('❌ Player ID not found.','rgba(255,100,100,0.85)');
 }
 
 async function checkIncomingFriendRequests(){
@@ -6389,6 +6457,7 @@ async function checkIncomingFriendRequests(){
         if(!friends.find(function(f){return f.id===k;})){
           friends.push({id:k,name:v.fromName||k,avatar:v.fromAvatar||'😎',score:v.fromScore||0});
           lsSet('friends',friends);
+          _syncFriendsToFirebase(); // Fix B: persist friends to cloud immediately
           showMilestone('🤝 '+( v.fromName||k)+' accepted your friend request!');
         }
         fetch(FB+'/bb/friendRequests/'+playerId+'/'+k+'.json',{method:'DELETE'}).catch(function(){});
@@ -6422,6 +6491,7 @@ async function acceptFriendRequest(req){
   if(!friends.find(function(f){return f.id===req.id;})){
     friends.push({id:req.id,name:req.name,avatar:req.avatar,score:req.score});
     lsSet('friends',friends);
+    _syncFriendsToFirebase(); // Fix B: persist friends to cloud immediately
   }
   // Remove request from Firebase
   try{await fetch(FB+'/bb/friendRequests/'+playerId+'/'+req.id+'.json',{method:'DELETE'});}catch(e){}
@@ -9829,7 +9899,18 @@ function loadSpectateList(){
     var mk=(playerName||'').replace(/\s/g,'_');
     var pl=Object.entries(d).filter(function(e){return e[0]!==mk;}).sort(function(a,b){return(b[1].score||0)-(a[1].score||0);}).slice(0,10);
     if(!pl.length){div.innerHTML='<div style="color:rgba(255,255,255,0.4);font-family:Share Tech Mono,monospace;font-size:3vw;text-align:center;padding:4vw;">No other players online.</div>';return;}
-    div.innerHTML=pl.map(function(e){var k=e[0],p=e[1];return'<div onclick="startSpectate(\''+k+'\')" style="display:flex;justify-content:space-between;align-items:center;font-family:Share Tech Mono,monospace;font-size:3vw;padding:3vw;border:0.4vw solid rgba(0,234,255,0.2);border-radius:2vw;margin-bottom:2vw;background:rgba(0,234,255,0.05);cursor:pointer;width:88vw;box-sizing:border-box;touch-action:manipulation;"><div><div style="color:#fff;">'+(p.name||k.replace(/_/g,' '))+'</div><div style="color:rgba(170,130,255,0.6);font-size:2.4vw;">LVL '+(p.level||1)+'</div></div><div style="color:#bae6fd;">🔴 '+p.score+'</div></div>';}).join('');
+    div.innerHTML='';
+    pl.forEach(function(e){
+      var k=e[0],p=e[1];
+      var card=document.createElement('div');
+      card.style.cssText='display:flex;justify-content:space-between;align-items:center;font-family:Share Tech Mono,monospace;font-size:3vw;padding:3vw;border:0.4vw solid rgba(0,234,255,0.2);border-radius:2vw;margin-bottom:2vw;background:rgba(0,234,255,0.05);cursor:pointer;width:88vw;box-sizing:border-box;touch-action:manipulation;';
+      card.innerHTML='<div><div style="color:#fff;">'+(p.name||k.replace(/_/g,' '))+'</div><div style="color:rgba(170,130,255,0.6);font-size:2.4vw;">LVL '+(p.level||1)+'</div></div><div style="color:#bae6fd;">🔴 '+p.score+'</div>';
+      (function(key){
+        card.addEventListener('click',function(){startSpectate(key);});
+        card.addEventListener('touchend',function(ev){ev.preventDefault();startSpectate(key);});
+      })(k);
+      div.appendChild(card);
+    });
   }).catch(function(){div.innerHTML='<div style="color:rgba(255,100,100,0.7);font-family:Share Tech Mono,monospace;font-size:3vw;text-align:center;padding:3vw;">Could not load</div>';});
 }
 function startSpectate(k){
@@ -9887,45 +9968,59 @@ async function recoverAccount(){
   btn.textContent = '...'; btn.disabled = true;
   status.textContent = '🔍 Looking up account...';
   try {
-    var r = await fetch(FB+'/bb/saves/'+id+'.json', {cache:'no-store'});
-    var d = await r.json();
-    if(d && d.savedLevel && d.savedLevel >= 1){
-      // Check password if one is set on the account
-      var accountPw = d.accountPassword||'';
-      if(accountPw && accountPw !== enteredPw){
-        status.textContent = '❌ Wrong password!';
-        btn.textContent = '🔑 RESTORE'; btn.disabled = false;
-        return;
-      }
-      // Clean restore: load exactly what is in the cloud
+    // Always fetch BOTH sources in parallel for best data
+    var [r, r2] = await Promise.all([
+      fetch(FB+'/bb/saves/'+id+'.json', {cache:'no-store'}),
+      fetch(FB+'/bb/players/'+id+'.json', {cache:'no-store'})
+    ]);
+    var d  = r.ok  ? await r.json()  : null;
+    var d2 = r2.ok ? await r2.json() : null;
+
+    // Must have at least one valid source
+    if(!d && !d2){ status.textContent = '❌ No account found for that ID.'; btn.textContent = '🔑 RESTORE'; btn.disabled = false; return; }
+    if(!d2 && (!d || !d.playerName)){ status.textContent = '❌ No account found for that ID.'; btn.textContent = '🔑 RESTORE'; btn.disabled = false; return; }
+
+    // Password check (from full save)
+    var accountPw = (d && d.accountPassword) || '';
+    if(accountPw && accountPw !== enteredPw){
+      status.textContent = '❌ Wrong password!';
+      btn.textContent = '🔑 RESTORE'; btn.disabled = false;
+      return;
+    }
+
+    // Start from full save if available, else empty
+    if(d && typeof d === 'object'){
       Object.keys(d).forEach(function(k){ _save[k] = d[k]; });
-      _save['playerId'] = id;
-      writeSave(_save);
-      status.textContent = '✅ Account found! LVL '+d.savedLevel+' · Reloading...';
-      setTimeout(function(){ window.location.reload(); }, 1500);
-      return;
     }
-    var r2 = await fetch(FB+'/bb/players/'+id+'.json', {cache:'no-store'});
-    var d2 = await r2.json();
-    if(d2 && d2.name){
-      _save['playerId'] = id;
-      _save['playerName'] = d2.name || '';
-      _save['savedLevel'] = d2.level || 1;
-      _save['highestLevel'] = d2.level || 1;
-      _save['totalLevels'] = d2.level || 1;
-      _save['hs_hard'] = d2.score || 0;
-      _save['hs_easy'] = d2.score || 0;
-      _save['hs_medium'] = d2.score || 0;
-      _save['totalTrophies'] = d2.trophies || 0;
-      _save['totalXP'] = (d2.trophies||0) * 2000;
-      _save['coins'] = 1000;
-      _save['friends'] = [];
-      writeSave(_save);
-      status.textContent = '✅ Found '+d2.name+'! LVL '+(d2.level||1)+' · Reloading...';
-      setTimeout(function(){ window.location.reload(); }, 1500);
-      return;
+
+    // Always take the HIGHEST values between saves and players node
+    // This prevents rollback to old data
+    var bestLevel  = Math.max(d&&d.savedLevel||0,  d&&d.highestLevel||0, d&&d.totalLevels||0, d2&&d2.level||0);
+    var bestScore  = Math.max(d&&d.hs_hard||0, d&&d.hs_medium||0, d&&d.hs_easy||0, d2&&d2.score||0);
+    var bestTrophy = Math.max(d&&d.totalTrophies||0, d2&&d2.trophies||0);
+
+    _save['playerId']      = id;
+    _save['playerName']    = (d&&d.playerName) || (d2&&d2.name) || '';
+    _save['savedLevel']    = bestLevel || 1;
+    _save['highestLevel']  = bestLevel || 1;
+    _save['totalLevels']   = bestLevel || 1;
+    _save['hs_hard']       = bestScore;
+    _save['hs_medium']     = bestScore;
+    _save['hs_easy']       = bestScore;
+    _save['totalTrophies'] = bestTrophy;
+    _save['totalXP']       = bestTrophy * 2000;
+
+    // Preserve friends from full save
+    if(d && Array.isArray(d.friends) && d.friends.length > 0){
+      _save['friends'] = d.friends;
+    } else {
+      _save['friends'] = _save['friends'] || [];
     }
-    status.textContent = '❌ No account found for that ID.';
+
+    writeSave(_save);
+    status.textContent = '✅ Restored! LVL '+bestLevel+' · Score '+bestScore.toLocaleString()+' · Reloading...';
+    setTimeout(function(){ window.location.reload(); }, 1500);
+
   } catch(e) {
     status.textContent = '❌ Error connecting. Try again.';
   }
