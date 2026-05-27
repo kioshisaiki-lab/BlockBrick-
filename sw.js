@@ -1,5 +1,5 @@
 // Block Brick Service Worker v66 — music downloader support
-const CACHE_NAME = 'blockbrick-v3.7';
+const CACHE_NAME = 'blockbrick-v3.8';
 
 const CORE_FILES = [
   './index.html',
