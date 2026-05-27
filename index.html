@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-var CURRENT_VERSION = 3.9;
+var CURRENT_VERSION = 4.0;
 window.addEventListener('load', function(){
   var vb=document.getElementById('versionBadge');
   var sv=document.getElementById('settingsVersion');
@@ -635,7 +635,7 @@ window.addEventListener('load', function(){
 </style>
 <style>
 /* ═══════════════════════════════════════════════════════
-   GLASSMORPHISM REDESIGN — Block Brick v3.7+
+   GLASSMORPHISM REDESIGN — Block Brick v4.0+
    Theme: Aesthetic semi-clear glass, medium frosted panels
    Loading: Retro pixel boot-up
 ═══════════════════════════════════════════════════════ */
@@ -1557,7 +1557,7 @@ input:checked + .slider {
       <img id="loaderLogo" src="icon-192.png" alt="Block Brick" onerror="this.style.display='none'">
     </div>
     <div id="loaderTitle">BLOCK<span>BRICK</span></div>
-    <div class="loader-ver">v3.7</div>
+    <div class="loader-ver">v4.0</div>
     <div id="bootConsole"></div>
     <div id="loaderBarWrap">
       <div id="loaderBarLabel">LOADING... 0%</div>
@@ -6217,8 +6217,44 @@ function renderFriendsList(){
     noFriends.style.cssText="font-family:'Share Tech Mono',monospace;font-size:2.8vw;color:rgba(255,255,255,0.25);text-align:center;padding:4vw;";
     noFriends.textContent='No friends yet. Add one by ID!';
     fl.appendChild(noFriends);
+    // Still show sent requests even if no friends yet
+    var _sentIds=Object.keys(localStorage).filter(function(k){return k.startsWith('sentReq_');}).map(function(k){return k.replace('sentReq_','');}).filter(function(id){return localStorage.getItem(k)!=='false'&&!friends.find(function(f){return f.id===id;});});
+    if(_sentIds.length>0){
+      var sentSec=document.createElement('div');
+      sentSec.style.cssText='width:100%;margin-top:3vw;';
+      var sentTitle=document.createElement('div');
+      sentTitle.style.cssText="font-family:'Orbitron',sans-serif;font-size:2.6vw;font-weight:700;color:rgba(186,230,253,0.5);letter-spacing:0.1em;margin-bottom:2vw;";
+      sentTitle.textContent='📤 REQUESTED';
+      sentSec.appendChild(sentTitle);
+      _sentIds.forEach(function(sid){
+        var srow=document.createElement('div');
+        srow.style.cssText='display:flex;align-items:center;gap:3vw;background:rgba(56,189,248,0.05);border:0.3vw solid rgba(56,189,248,0.2);border-radius:2vw;padding:2.5vw 3.5vw;margin-bottom:2vw;';
+        srow.innerHTML='<div style="font-size:6vw;">⏳</div><div style="flex:1;font-family:\'Share Tech Mono\',monospace;font-size:2.8vw;color:rgba(186,230,253,0.7);">'+sid+'</div><div style="font-family:\'Orbitron\',sans-serif;font-size:2.2vw;color:rgba(56,189,248,0.6);border:0.3vw solid rgba(56,189,248,0.3);border-radius:999px;padding:0.8vw 2vw;">REQUESTED</div>';
+        sentSec.appendChild(srow);
+      });
+      fl.appendChild(sentSec);
+    }
     return;
   }
+
+  // Show sent (pending) requests section above friend list
+  var sentIds=Object.keys(localStorage).filter(function(k){return k.startsWith('sentReq_')&&localStorage.getItem(k)!=='false';}).map(function(k){return k.replace('sentReq_','');}).filter(function(id){return !friends.find(function(f){return f.id===id;})&&!pendingRequests.find(function(r){return r.id===id;});});
+  if(sentIds.length>0){
+    var sentSection=document.createElement('div');
+    sentSection.style.cssText='width:100%;margin-bottom:4vw;';
+    var sentHeader=document.createElement('div');
+    sentHeader.style.cssText="font-family:'Orbitron',sans-serif;font-size:2.6vw;font-weight:700;color:rgba(186,230,253,0.5);letter-spacing:0.1em;margin-bottom:2vw;";
+    sentHeader.textContent='📤 SENT REQUESTS';
+    sentSection.appendChild(sentHeader);
+    sentIds.forEach(function(sid){
+      var scard=document.createElement('div');
+      scard.style.cssText='display:flex;align-items:center;gap:3vw;background:rgba(56,189,248,0.05);border:0.3vw solid rgba(56,189,248,0.2);border-radius:2vw;padding:2.5vw 3.5vw;margin-bottom:2vw;';
+      scard.innerHTML='<div style="font-size:6vw;">⏳</div><div style="flex:1;font-family:\'Share Tech Mono\',monospace;font-size:2.8vw;color:rgba(186,230,253,0.7);">'+sid+'</div><div style="font-family:\'Orbitron\',sans-serif;font-size:2.2vw;color:rgba(56,189,248,0.65);border:0.3vw solid rgba(56,189,248,0.35);border-radius:999px;padding:0.8vw 2vw;letter-spacing:0.05em;">REQUESTED</div>';
+      sentSection.appendChild(scard);
+    });
+    fl.appendChild(sentSection);
+  }
+
   friends.forEach(function(f,i){
     const unread=getChatUnread(f.id);
     const row=document.createElement('div');
@@ -6310,15 +6346,9 @@ async function addFriend(){
   }
   const btn=document.getElementById('addFriendBtn');
   btn.textContent='...';btn.disabled=true;
-  // Look up player info
-  let name=id,score=0,avatar='😎';
-  try{
-    const r=await fetch(FB+'/bb/players/'+id+'.json',{cache:'no-store'});
-    if(r.ok){const d=await r.json();if(d){name=d.name||id;score=d.score||0;avatar=d.avatar||'😎';}}
-  }catch(e){}
   if(!FB_READY){
     // Offline fallback — just add directly
-    friends.push({id,name,score,avatar});
+    friends.push({id,name:id,score:0,avatar:'😎'});
     lsSet('friends',friends);
     input.value='';
     renderFriendsList();
@@ -6326,7 +6356,15 @@ async function addFriend(){
     showMilestone('✅ Friend added!');
     return;
   }
-  const result = await sendFriendRequestToId(id, name, avatar, score);
+  // Look up player info AND send request in parallel for speed
+  let name=id,score=0,avatar='😎';
+  const [playerData, result] = await Promise.all([
+    fetch(FB+'/bb/players/'+id+'.json',{cache:'no-store'})
+      .then(function(r){return r.ok?r.json():null;})
+      .catch(function(){return null;}),
+    sendFriendRequestToId(id, id, '😎', 0)
+  ]);
+  if(playerData){name=playerData.name||id;score=playerData.score||0;avatar=playerData.avatar||'😎';}
   input.value='';
   btn.textContent='+ ADD';btn.disabled=false;
   if(result==='ok') showMilestone('📨 Friend request sent to '+name+'!');
@@ -6407,9 +6445,9 @@ async function declineFriendRequest(req){
   renderFriendsList();
 }
 
-// Poll for requests every 30s
-setInterval(checkIncomingFriendRequests, 30000);
-setTimeout(checkIncomingFriendRequests, 5000);
+// Poll for requests every 10s
+setInterval(checkIncomingFriendRequests, 10000);
+setTimeout(checkIncomingFriendRequests, 3000);
 
 function sendChallenge(name,idx){
   const myBest=Math.max(ls('hs_easy',0),ls('hs_medium',0),ls('hs_hard',0));
@@ -7356,9 +7394,9 @@ function startBgPoll(){
       }catch(e){}
     }
     updateChatNotifBadge();
-  },10000); // Check every 10 seconds
+  },4000); // Check every 4 seconds
 }
-setTimeout(startBgPoll,5000);
+setTimeout(startBgPoll,2000);
 
 function openChat(friendId,friendName,friendScore,idx){
   currentChatFriendId=friendId;
